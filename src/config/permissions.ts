@@ -1,0 +1,69 @@
+// Recursos/Módulos exactos extraídos de la API HelpDesk
+export const RESOURCES = {
+  USERS: "usuario",
+  CLIENTS: "clientes",
+  BRANCHES: "sucursales",
+  AREAS: "areas",
+  EQUIPMENT: "equipos",
+  HARDWARE: "hardware",
+  SOFTWARE: "software",
+  PLANS: "planes",
+  TICKETS: "tickets",
+  APPOINTMENTS: "citas",
+} as const;
+
+// Acciones del sistema
+export const ACTIONS = {
+  READ: "read",
+  CREATE: "create",
+  UPDATE: "update",
+  DELETE: "delete",
+  // Acciones específicas del negocio HelpDesk
+  ASSIGN: "assign",
+  RESOLVE: "resolve",
+  TRANSFER: "transfer",
+  CANCEL: "cancel",
+  INSTALL: "install",
+  TOGGLE_STATUS: "toggle_status", // Para activar/desactivar
+} as const;
+
+// Matriz de Permisos Estricta
+export const PERMISSIONS = {
+  // --- USUARIOS ---
+  USERS_READ: `${RESOURCES.USERS}:${ACTIONS.READ}`,
+  USERS_CREATE_EMPLOYEE: `${RESOURCES.USERS}:create_employee`,
+  USERS_ASSIGN_ROLE: `${RESOURCES.USERS}:assign_role`,
+  USERS_TOGGLE_STATUS: `${RESOURCES.USERS}:${ACTIONS.TOGGLE_STATUS}`,
+
+  // --- CLIENTES ---
+  CLIENTS_READ: `${RESOURCES.CLIENTS}:${ACTIONS.READ}`,
+  CLIENTS_CREATE: `${RESOURCES.CLIENTS}:${ACTIONS.CREATE}`,
+  CLIENTS_UPDATE: `${RESOURCES.CLIENTS}:${ACTIONS.UPDATE}`,
+  CLIENTS_UPDATE_CONTRACT: `${RESOURCES.CLIENTS}:update_contract`,
+
+  // --- EQUIPOS ---
+  EQUIPMENT_READ: `${RESOURCES.EQUIPMENT}:${ACTIONS.READ}`,
+  EQUIPMENT_CREATE: `${RESOURCES.EQUIPMENT}:${ACTIONS.CREATE}`,
+  EQUIPMENT_ASSIGN: `${RESOURCES.EQUIPMENT}:${ACTIONS.ASSIGN}`,
+  EQUIPMENT_DELETE: `${RESOURCES.EQUIPMENT}:${ACTIONS.DELETE}`,
+
+  // --- HARDWARE & SOFTWARE ---
+  HARDWARE_INSTALL: `${RESOURCES.HARDWARE}:${ACTIONS.INSTALL}`,
+  SOFTWARE_INSTALL: `${RESOURCES.SOFTWARE}:${ACTIONS.INSTALL}`,
+
+  // --- TICKETS ---
+  TICKETS_READ: `${RESOURCES.TICKETS}:${ACTIONS.READ}`,
+  TICKETS_CREATE: `${RESOURCES.TICKETS}:${ACTIONS.CREATE}`,
+  TICKETS_ASSIGN: `${RESOURCES.TICKETS}:${ACTIONS.ASSIGN}`,
+  TICKETS_TRANSFER: `${RESOURCES.TICKETS}:${ACTIONS.TRANSFER}`,
+  TICKETS_RESOLVE: `${RESOURCES.TICKETS}:${ACTIONS.RESOLVE}`,
+  TICKETS_METRICS: `${RESOURCES.TICKETS}:metrics`,
+
+  // --- CITAS ---
+  APPOINTMENTS_READ: `${RESOURCES.APPOINTMENTS}:${ACTIONS.READ}`,
+  APPOINTMENTS_CREATE: `${RESOURCES.APPOINTMENTS}:${ACTIONS.CREATE}`,
+  APPOINTMENTS_CANCEL: `${RESOURCES.APPOINTMENTS}:${ACTIONS.CANCEL}`,
+} as const;
+
+// Tipo automático para autocompletado en toda la app
+export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
