@@ -1,3 +1,4 @@
+// src/config/rolePermissions.ts
 import { PERMISSIONS } from "./permissions";
 import type { Permission } from "./permissions";
 

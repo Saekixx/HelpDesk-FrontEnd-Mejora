@@ -1,3 +1,5 @@
+// src/config/permissions.ts
+
 // Recursos/Módulos exactos extraídos de la API HelpDesk
 export const RESOURCES = {
   USERS: "usuario",
