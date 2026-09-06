@@ -1,12 +1,18 @@
-import { AuthProvider } from "./context/AuthProvider";
+import { BrowserRouter } from "react-router-dom";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/context/AuthProvider";
 import { AppRouter } from "./router/AppRouter";
 
-export const App = () => {
+export function App() {
   return (
-    <AuthProvider>
-      <AppRouter />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <TooltipProvider>
+          <AppRouter />
+        </TooltipProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
-};
+}
 
 export default App;

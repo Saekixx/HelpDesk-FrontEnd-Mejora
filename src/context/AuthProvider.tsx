@@ -5,6 +5,7 @@ import type { User } from "../types/auth";
 import { ROLE_PERMISSIONS } from "../config/rolePermissions";
 import type { Role } from "../config/rolePermissions";
 import type { Permission } from "../config/permissions";
+import { useNavigate } from "react-router-dom";
 
 // Componente proveedor de autenticación
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -16,6 +17,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  const navigate = useNavigate();
 
   // Función para iniciar sesión y almacenar el token y el usuario en el estado y en localStorage
   const login = (data: {
@@ -44,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    navigate("/login", { replace: true });
   };
 
   // Función para verificar si el usuario tiene un permiso específico

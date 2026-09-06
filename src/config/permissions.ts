@@ -2,7 +2,7 @@
 
 // Recursos/Módulos exactos extraídos de la API HelpDesk
 export const RESOURCES = {
-  USERS: "usuario",
+  USERS: "usuarios",
   CLIENTS: "clientes",
   BRANCHES: "sucursales",
   AREAS: "areas",
