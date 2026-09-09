@@ -1,15 +1,13 @@
 /* eslint-disable preserve-caught-error */
 import { api } from "@/lib/axios";
 import { LoginFormData } from "../schemas/login.schema";
-import { LoginResponse } from "../types/auth.types";
+import { AuthData, LoginResponse } from "../types/auth.types";
 import { isAxiosError } from "axios";
 
-export const loginService = async (
-  data: LoginFormData,
-): Promise<LoginResponse> => {
+export const loginService = async (data: LoginFormData): Promise<AuthData> => {
   try {
     const response = await api.post<LoginResponse>("/auth/login", data);
-    return response.data;
+    return response.data.data;
   } catch (error) {
     if (isAxiosError(error) && error.response) {
       const serverMessage = error.response.data?.message;
