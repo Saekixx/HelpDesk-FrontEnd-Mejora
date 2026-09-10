@@ -1,14 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
-import {
-  GetUsersQueryParams,
-  UserListItem,
-  PaginationMeta,
-} from "../types/user.types";
 import { getUsersService } from "../services/users.service";
+import { GetUsersQueryParams, UserListItem } from "../types/user.entity";
+import { PaginationMeta } from "../types/user.responses";
 
-export const useUsers = () => {
+export const useUsers = (
+  initialParams: GetUsersQueryParams = { page: 1, limit: 5 },
+) => {
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({
     total: 0,
@@ -18,11 +15,7 @@ export const useUsers = () => {
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [filters, setFilters] = useState<GetUsersQueryParams>({
-    page: 1,
-    limit: 5,
-  });
+  const [filters, setFilters] = useState<GetUsersQueryParams>(initialParams);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -31,7 +24,7 @@ export const useUsers = () => {
       const result = await getUsersService(filters);
       setUsers(result.data);
       setMeta(result.meta);
-    } catch (err) {
+    } catch {
       setError("Error al cargar la lista de usuarios");
     } finally {
       setLoading(false);
@@ -39,6 +32,7 @@ export const useUsers = () => {
   }, [filters]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
   }, [fetchUsers]);
 

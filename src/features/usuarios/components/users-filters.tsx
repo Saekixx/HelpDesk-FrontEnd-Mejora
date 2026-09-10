@@ -9,16 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GetUsersQueryParams } from "../types/user.types";
-
-const ROLE_MAP: Record<string, number> = {
-  Administrador: 1,
-  "Soporte Remoto": 2,
-  "Soporte Insitu": 3,
-  "Cliente Empresa": 4,
-  "Cliente Sucursal": 5,
-  "Cliente Trabajador": 6,
-};
+import { GetUsersQueryParams } from "../types/user.entity";
+import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
 
 interface UsersFiltersProps {
   onApplyFilters: (filters: Partial<GetUsersQueryParams>) => void;
@@ -26,18 +18,21 @@ interface UsersFiltersProps {
 
 export const UsersFilters = ({ onApplyFilters }: UsersFiltersProps) => {
   const [search, setSearch] = useState("");
-  const [role, setRole] = useState("ALL");
+  const [roleId, setRoleId] = useState("ALL");
   const [status, setStatus] = useState("ALL");
 
+  const { roles: rolesOptions, loading } = useCatalogOptions();
+  // Obtenemos el objeto seleccionado para renderizar su label limpia
+  const selectedRole = rolesOptions.find((opt) => String(opt.value) === roleId);
+
   const handleApply = () => {
-    // Convertimos explícitamente el string 'true' / 'false' a booleano real
     let isActiveValue: boolean | undefined = undefined;
     if (status === "true") isActiveValue = true;
     if (status === "false") isActiveValue = false;
 
     onApplyFilters({
       search: search.trim() || undefined,
-      id_rol: role === "ALL" ? undefined : ROLE_MAP[role],
+      id_rol: roleId === "ALL" ? undefined : Number(roleId),
       is_active: isActiveValue,
     });
   };
@@ -55,26 +50,38 @@ export const UsersFilters = ({ onApplyFilters }: UsersFiltersProps) => {
         />
       </div>
 
-      {/* Select Rol */}
-      <Select value={role} onValueChange={setRole}>
-        <SelectTrigger className="w-full sm:w-[170px] bg-white border-gray-200 text-gray-700">
-          <SelectValue>
-            {role === "ALL" ? "Rol: Todos" : `Rol: ${role}`}
+      {/* Select Rol Dinámico */}
+      <Select
+        value={roleId}
+        onValueChange={(value) => setRoleId(value ?? "ALL")}
+        disabled={loading.roles}
+      >
+        <SelectTrigger className="w-full sm:w-auto min-w-[200px] max-w-[280px] bg-white border-gray-200 text-gray-700">
+          <SelectValue
+            placeholder={loading.roles ? "Cargando roles..." : "Rol: Todos"}
+          >
+            <span className="truncate block">
+              {roleId === "ALL"
+                ? "Rol: Todos"
+                : `Rol: ${selectedRole?.label ?? roleId}`}
+            </span>
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="ALL">Rol: Todos</SelectItem>
-          <SelectItem value="Administrador">Administrador</SelectItem>
-          <SelectItem value="Soporte Remoto">Soporte Remoto</SelectItem>
-          <SelectItem value="Soporte Insitu">Soporte Insitu</SelectItem>
-          <SelectItem value="Cliente Empresa">Cliente Empresa</SelectItem>
-          <SelectItem value="Cliente Sucursal">Cliente Sucursal</SelectItem>
-          <SelectItem value="Cliente Trabajador">Cliente Trabajador</SelectItem>
+          {rolesOptions.map((opt) => (
+            <SelectItem key={opt.value} value={String(opt.value)}>
+              {opt.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
 
       {/* Select Estado */}
-      <Select value={status} onValueChange={setStatus}>
+      <Select
+        value={status}
+        onValueChange={(value) => setStatus(value ?? "ALL")}
+      >
         <SelectTrigger className="w-full sm:w-[170px] bg-white border-gray-200 text-gray-700">
           <SelectValue>
             {status === "ALL"

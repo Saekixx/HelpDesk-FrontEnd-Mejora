@@ -47,15 +47,15 @@ export const NAVIGATION_MENU: NavItem[] = [
     roles: ["ADMINISTRADOR", "SOPORTE_REMOTO", "SOPORTE_INSITU"],
   },
   {
-    title: "Áreas",
-    path: "/areas",
-    icon: Building2,
-    roles: ["ADMINISTRADOR"],
-  },
-  {
     title: "Sucursales",
     path: "/sucursales",
     icon: MapPin,
+    roles: ["ADMINISTRADOR"],
+  },
+  {
+    title: "Áreas",
+    path: "/areas",
+    icon: Building2,
     roles: ["ADMINISTRADOR"],
   },
   {

@@ -1,3 +1,4 @@
+// Entidad e información base de un usuario
 export interface UserListItem {
   id_usuario: number;
   nombre: string;
@@ -21,27 +22,7 @@ export interface UserListItem {
   nombre_area: string | null;
 }
 
-export interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export interface UsersPaginatedData {
-  data: UserListItem[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export interface UsersApiResponse {
-  status: number;
-  message: string;
-  data: UsersPaginatedData;
-}
-
+// Parámetros de consulta para filtrado y paginación
 export interface GetUsersQueryParams {
   search?: string;
   id_rol?: number;
