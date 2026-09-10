@@ -11,6 +11,10 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { UserListItem } from "@/features/usuarios/types/user.entity";
 import { UpdateUserFormValues } from "@/features/usuarios/schemas/user-form.schema";
 import {
+  UpdateUserDto,
+  CreateUserDto,
+} from "@/features/usuarios/types/user.dtos";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -60,15 +64,28 @@ const UsersPage = () => {
     setIsModalOpen(true);
   };
 
-  // Submit unificado para crear o editar
+  // Submit unificado para crear o editar con sanitización estricta del DTO
   const handleSubmitUser = async (
     data: UpdateUserFormValues,
     isEdit: boolean,
   ) => {
     if (isEdit && userToEdit) {
-      await updateUser(userToEdit.id_usuario, data);
+      // Mapeo limpio para coincidir estrictamente con UpdateUserDto
+      const updatePayload: UpdateUserDto = {
+        nombre: data.nombre,
+        apellido: data.apellido,
+        correo: data.correo,
+        telefono: data.telefono || undefined,
+        resetPassword: Boolean(data.resetPassword),
+        id_rol: data.id_rol,
+        id_cliente: data.id_cliente ?? undefined,
+        id_sucursal: data.id_sucursal ?? undefined,
+        id_area: data.id_area ?? undefined,
+      };
+
+      await updateUser(userToEdit.id_usuario, updatePayload);
     } else {
-      await createUser(data);
+      await createUser(data as CreateUserDto);
     }
   };
 

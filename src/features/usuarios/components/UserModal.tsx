@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/incompatible-library */
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -14,6 +15,7 @@ import { userSchema, UpdateUserFormValues } from "../schemas/user-form.schema";
 import { UserListItem } from "../types/user.entity";
 import { UserFormFields } from "./UserFormFields";
 import { PasswordResetAlert } from "./PasswordResetAlert";
+import { UpdateUserDto } from "../types/user.dtos";
 
 interface SelectOption {
   label: string;
@@ -23,7 +25,7 @@ interface SelectOption {
 interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: UpdateUserFormValues, isEdit: boolean) => Promise<void>;
+  onSubmit: (data: any, isEdit: boolean) => Promise<void>;
   userToEdit?: UserListItem | null;
   rolesOptions: SelectOption[];
   clientesOptions: SelectOption[];
@@ -56,7 +58,6 @@ export const UserModal = ({
       apellido: "",
       correo: "",
       telefono: "",
-      password: "",
       id_rol: undefined,
       id_cliente: null,
       id_sucursal: null,
@@ -73,7 +74,6 @@ export const UserModal = ({
           apellido: userToEdit.apellido || "",
           correo: userToEdit.correo || "",
           telefono: userToEdit.telefono || "",
-          password: "",
           id_rol: userToEdit.id_rol ?? undefined,
           id_cliente: userToEdit.id_cliente ?? null,
           id_sucursal: userToEdit.id_sucursal ?? null,
@@ -89,7 +89,6 @@ export const UserModal = ({
           apellido: "",
           correo: "",
           telefono: "",
-          password: "",
           id_rol: undefined,
           id_cliente: null,
           id_sucursal: null,
@@ -101,7 +100,24 @@ export const UserModal = ({
   }, [isOpen, userToEdit, form, onClienteChange, onSucursalChange]);
 
   const handleFormSubmit = async (values: UpdateUserFormValues) => {
-    await onSubmit(values, isEdit);
+    if (isEdit) {
+      // Filtramos y armamos estrictamente el UpdateUserDto sin campos vacíos ni nulos no permitidos
+      const updatePayload: UpdateUserDto = {
+        nombre: values.nombre,
+        apellido: values.apellido,
+        correo: values.correo,
+        telefono: values.telefono || undefined,
+        resetPassword: Boolean(values.resetPassword),
+        id_rol: values.id_rol,
+        id_cliente: values.id_cliente ?? undefined,
+        id_sucursal: values.id_sucursal ?? undefined,
+        id_area: values.id_area ?? undefined,
+      };
+
+      await onSubmit(updatePayload, true);
+    } else {
+      await onSubmit(values, false);
+    }
     onClose();
   };
 

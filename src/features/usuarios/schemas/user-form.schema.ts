@@ -14,7 +14,6 @@ const baseUserSchema = z.object({
   apellido: z.string().min(1, "El apellido es obligatorio"),
   correo: z.string().email("Correo electrónico inválido"),
   telefono: z.string().optional(),
-  password: z.string().optional(),
   id_rol: z.number({ error: "El rol es obligatorio" }),
   id_cliente: z.number().nullable().optional(),
   id_sucursal: z.number().nullable().optional(),
