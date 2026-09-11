@@ -93,7 +93,6 @@ export const UserModal = ({
           id_cliente: null,
           id_sucursal: null,
           id_area: null,
-          resetPassword: false,
         });
       }
     }

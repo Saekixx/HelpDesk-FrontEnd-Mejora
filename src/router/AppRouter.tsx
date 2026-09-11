@@ -9,6 +9,7 @@ import ClientsPage from "@/pages/ClientsPage";
 import UnauthorizedPage from "@/pages/UnauthorizedPage";
 import UsersPage from "@/pages/UsersPage";
 import ProfilePage from "@/pages/ProfilePage";
+import PlanesPages from "@/pages/PlanesPages";
 
 export const AppRouter = () => {
   return (
@@ -32,7 +33,7 @@ export const AppRouter = () => {
           <Route path="/sucursales" element={<div>Página Sucursales</div>} />
           <Route path="/hardware" element={<div>Página Hardware</div>} />
           <Route path="/software" element={<div>Página Software</div>} />
-          <Route path="/planes" element={<div>Página Planes</div>} />
+          <Route path="/planes" element={<PlanesPages />} />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
