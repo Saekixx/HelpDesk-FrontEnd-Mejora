@@ -10,11 +10,17 @@ import UnauthorizedPage from "@/pages/UnauthorizedPage";
 import UsersPage from "@/pages/UsersPage";
 import ProfilePage from "@/pages/ProfilePage";
 import PlanesPages from "@/pages/PlanesPages";
+import { ConfirmRegisterPage } from "@/pages/ConfirmRegisterPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 
 export const AppRouter = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/confirm-email" element={<ConfirmRegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Rutas protegidas dentro del Layout */}

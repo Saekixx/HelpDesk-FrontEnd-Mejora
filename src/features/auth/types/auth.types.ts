@@ -1,12 +1,4 @@
-export interface User {
-  nombre: string;
-  apellido: string;
-  correo: string;
-  role: string;
-  id_empresa: number | null;
-  id_sucursal: number | null;
-  id_area: number | null;
-}
+import { User, UserDetail } from "./user.type";
 
 export interface AuthData {
   token: string;
@@ -17,4 +9,32 @@ export interface LoginResponse {
   status: number;
   message: string;
   data: AuthData;
+}
+
+export interface ConfirmRegisterPayload {
+  token: string;
+  password: string;
+}
+
+export interface ConfirmRegisterResponse {
+  status: number;
+  message: string;
+  data: UserDetail;
+}
+
+export interface ForgotPasswordPayload {
+  correo: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
 }

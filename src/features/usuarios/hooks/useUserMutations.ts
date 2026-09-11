@@ -18,7 +18,6 @@ import {
 export const useUserMutations = (onSuccess?: () => void) => {
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Función helper para extraer mensajes de error de Axios
   const getErrorMessage = (err: unknown, defaultMsg: string): string => {
     if (isAxiosError(err) && err.response?.data?.message) {
       const msg = err.response.data.message;
@@ -27,37 +26,13 @@ export const useUserMutations = (onSuccess?: () => void) => {
     return defaultMsg;
   };
 
-  const toggleStatus = async (id: number) => {
-    setLoading(true);
-    try {
-      // 1. Llamada al servicio
-      const res = await toggleUserStatusService(id);
-
-      // 2. Notificación de éxito con el mensaje retornado del backend
-      toast.success(res.message || "Estado de usuario actualizado");
-
-      // 3. Callback para refrescar la tabla
-      if (onSuccess) onSuccess();
-
-      return res;
-    } catch (err: unknown) {
-      // 4. Captura del mensaje de error exacto (ej: "No puedes desactivar tu propia cuenta")
-      const errorMsg = getErrorMessage(
-        err,
-        "Error al cambiar el estado del usuario",
-      );
-      toast.error(errorMsg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const createUser = async (dto: CreateUserDto) => {
     setLoading(true);
     try {
       const data = await createUserService(dto);
-      toast.success("Usuario creado correctamente");
+      toast.success("Usuario creado correctamente", {
+        description: `Se ha enviado un correo de confirmación a ${dto.correo}`,
+      });
       if (onSuccess) onSuccess();
       return data;
     } catch (err: unknown) {
@@ -72,11 +47,38 @@ export const useUserMutations = (onSuccess?: () => void) => {
     setLoading(true);
     try {
       const data = await updateUserService(id, dto);
-      toast.success("Usuario actualizado correctamente");
+
+      if (dto.resetPassword) {
+        toast.success("Usuario y contraseña actualizados", {
+          description: `Se envió el enlace para restablecer la contraseña a ${dto.correo || data.correo}`,
+        });
+      } else {
+        toast.success("Usuario actualizado correctamente");
+      }
+
       if (onSuccess) onSuccess();
       return data;
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, "Error al actualizar el usuario"));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleStatus = async (id: number) => {
+    setLoading(true);
+    try {
+      const res = await toggleUserStatusService(id);
+      toast.success(res.message || "Estado de usuario actualizado");
+      if (onSuccess) onSuccess();
+      return res;
+    } catch (err: unknown) {
+      const errorMsg = getErrorMessage(
+        err,
+        "Error al cambiar el estado del usuario",
+      );
+      toast.error(errorMsg);
       throw err;
     } finally {
       setLoading(false);

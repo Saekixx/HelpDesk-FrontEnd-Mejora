@@ -27,8 +27,11 @@ export const useLoginForm = () => {
     setApiError(null);
     try {
       const response = await loginService(data);
-      login({ token: response.token, user: response.user });
-      navigate("/dashboard");
+
+      if (response?.token) {
+        login({ token: response.token, user: response.user });
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setApiError(err.message);

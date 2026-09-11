@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,7 @@ export const LoginForm = () => {
             </div>
           )}
 
-          {/* Campo Correo con Shadcn FormField */}
+          {/* Campo Correo */}
           <FormField
             control={form.control}
             name="correo"
@@ -69,7 +70,7 @@ export const LoginForm = () => {
             )}
           />
 
-          {/* Campo Contraseña con Shadcn FormField */}
+          {/* Campo Contraseña */}
           <FormField
             control={form.control}
             name="password"
@@ -106,12 +107,13 @@ export const LoginForm = () => {
           />
 
           <div className="text-right pt-1">
-            <a
-              href="#"
+            {/* Redirección con react-router-dom */}
+            <Link
+              to="/forgot-password"
               className="text-xs font-medium text-[#ff5722] hover:underline"
             >
               ¿Olvidaste tu contraseña?
-            </a>
+            </Link>
           </div>
 
           <Button

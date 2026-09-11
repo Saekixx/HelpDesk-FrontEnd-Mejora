@@ -1,4 +1,4 @@
-import { AlertTriangle, KeyRound } from "lucide-react";
+import { AlertTriangle, KeyRound, Mail } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -21,8 +21,9 @@ export const PasswordResetAlert = ({
             Advertencia de Seguridad
           </h5>
           <p className="text-xs leading-relaxed text-amber-800">
-            Restablecer la contraseña generará una nueva credencial y enviará un
-            correo de recuperación al usuario.
+            Restablecer la contraseña generará una nueva credencial por defecto
+            y enviará un correo de recuperación con un enlace de acceso al
+            usuario.
           </p>
         </div>
       </div>
@@ -49,8 +50,9 @@ export const PasswordResetAlert = ({
             >
               Restablecer contraseña
             </Label>
-            <span className="text-[11px] text-gray-500 block">
-              Generar un enlace/token de recuperación inmediatamente
+            <span className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
+              <Mail className="h-3 w-3 text-[#FF5722]" />
+              Genera y envía un token de recuperación inmediatamente
             </span>
           </div>
         </div>
