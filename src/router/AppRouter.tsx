@@ -13,6 +13,8 @@ import PlanesPages from "@/pages/PlanesPages";
 import { ConfirmRegisterPage } from "@/pages/ConfirmRegisterPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import SucursalPage from "@/pages/SucursalPage";
+import AreaPage from "@/pages/AreaPage";
 
 export const AppRouter = () => {
   return (
@@ -35,8 +37,8 @@ export const AppRouter = () => {
           {/* Vistas secundarias */}
           <Route path="/equipos" element={<div>Página Equipos</div>} />
           <Route path="/citas" element={<div>Página Citas</div>} />
-          <Route path="/areas" element={<div>Página Áreas</div>} />
-          <Route path="/sucursales" element={<div>Página Sucursales</div>} />
+          <Route path="/areas" element={<AreaPage />} />
+          <Route path="/sucursales" element={<SucursalPage />} />
           <Route path="/hardware" element={<div>Página Hardware</div>} />
           <Route path="/software" element={<div>Página Software</div>} />
           <Route path="/planes" element={<PlanesPages />} />

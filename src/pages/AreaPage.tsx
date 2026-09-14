@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useClientes } from "@/features/clientes/hooks/useClientes";
-import { ClientesFilters } from "@/features/clientes/components/clientes-filters";
-import { ClientesTable } from "@/features/clientes/components/clientes-table";
+import { useAreas } from "@/features/areas/hooks/useArea";
+import { areaService } from "@/features/areas/services/areas.service";
+import { AreasFilters } from "@/features/areas/components/areas-filters";
+import { AreasTable } from "@/features/areas/components/areas-table";
 import { PaginationControls } from "@/components/ui/pagination-controls";
-import { Cliente } from "@/features/clientes/types/cliente.entity";
+import { AreaListItem } from "@/features/areas/types/areas.entity";
+import { GetAreasFilterDto } from "@/features/areas/types/areas.dtos";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,48 +19,52 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const ClientsPage = () => {
-  const { clientes, meta, loading, setPage, setFilterValues, refetch } =
-    useClientes();
+function AreaPage() {
+  const { areas, meta, loading, setPage, setFilterValues, refetch } =
+    useAreas();
 
   // Estado para el modal de confirmación de cambio de estado
-  const [selectedClienteForStatus, setSelectedClienteForStatus] =
-    useState<Cliente | null>(null);
+  const [selectedAreaForStatus, setSelectedAreaForStatus] =
+    useState<AreaListItem | null>(null);
 
-  // Handlers para las acciones
+  // Handlers para abrir modales y acciones
   const handleOpenCreateModal = () => {
-    // Lógica para abrir el modal de creación de cliente cuando esté disponible
+    // Modal de creación de área
   };
 
-  const handleOpenEditModal = (cliente: Cliente) => {
-    // Lógica para abrir el modal de edición cuando esté disponible
+  const handleOpenEditModal = (area: AreaListItem) => {
+    // Modal de edición de área
   };
 
-  const handleViewDetails = (cliente: Cliente) => {
-    // Lógica para ver el detalle del cliente cuando esté disponible
+  const handleViewDetails = (area: AreaListItem) => {
+    // Detalle del área
+  };
+
+  const handleApplyFilters = (filters: Partial<GetAreasFilterDto>) => {
+    setFilterValues(filters);
   };
 
   const handleConfirmToggleStatus = async () => {
-    if (!selectedClienteForStatus) return;
+    if (!selectedAreaForStatus) return;
     try {
       // Llamar al método de toggle status correspondiente del service u hook de mutaciones
-      setSelectedClienteForStatus(null);
+      setSelectedAreaForStatus(null);
       refetch();
-    } catch {
-      // Manejar error si aplica
+    } catch (error) {
+      console.error("Error al cambiar el estado del área:", error);
     }
   };
 
   return (
-    <div className="p-6 space-y-4">
-      {/* Encabezado con Botón Nueva Empresa / Cliente */}
+    <div className="p-6 space-y-6">
+      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            Gestión de Clientes
+            Gestión de Áreas
           </h1>
           <p className="text-sm text-gray-500">
-            Administración de clientes, empresas registradas, planes y contratos
+            Organización de departamentos, responsables y asignación por sede
           </p>
         </div>
 
@@ -67,26 +73,27 @@ const ClientsPage = () => {
           className="bg-[#FF5722] hover:bg-[#F4511E] text-white font-medium flex items-center gap-1.5 shadow-sm"
         >
           <Plus className="h-4 w-4" />
-          Nueva Empresa
+          Nueva Área
         </Button>
       </div>
 
-      {/* Filtros */}
-      <ClientesFilters onApplyFilters={setFilterValues} />
+      {/* Barra de Filtros */}
+      <AreasFilters onApplyFilters={handleApplyFilters} />
 
       {/* Tabla y Paginación */}
       {loading ? (
-        <div className="p-8 text-center text-gray-500">
-          Cargando clientes...
+        <div className="p-12 text-center text-sm text-gray-500 bg-white rounded-lg border border-gray-200">
+          Cargando áreas...
         </div>
       ) : (
-        <>
-          <ClientesTable
-            clientes={clientes}
+        <div className="space-y-4">
+          <AreasTable
+            areas={areas}
             onViewDetails={handleViewDetails}
             onEdit={handleOpenEditModal}
-            onToggleStatus={(cliente) => setSelectedClienteForStatus(cliente)}
+            onToggleStatus={(area) => setSelectedAreaForStatus(area)}
           />
+
           <PaginationControls
             page={meta?.page ?? 1}
             lastPage={meta?.totalPages ?? 1}
@@ -94,28 +101,29 @@ const ClientsPage = () => {
             limit={meta?.limit ?? 10}
             onPageChange={setPage}
           />
-        </>
+        </div>
       )}
 
-      {/* Modal de confirmación para cambiar estado del cliente */}
+      {/* Modal de confirmación para activar/desactivar */}
       <AlertDialog
-        open={!!selectedClienteForStatus}
+        open={!!selectedAreaForStatus}
         onOpenChange={(open: boolean) =>
-          !open && setSelectedClienteForStatus(null)
+          !open && setSelectedAreaForStatus(null)
         }
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {selectedClienteForStatus?.is_active
-                ? "¿Desactivar cliente?"
-                : "¿Activar cliente?"}
+              {selectedAreaForStatus?.is_active
+                ? "¿Desactivar área?"
+                : "¿Activar área?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               ¿Estás seguro de que deseas{" "}
-              {selectedClienteForStatus?.is_active ? "desactivar" : "activar"} a{" "}
+              {selectedAreaForStatus?.is_active ? "desactivar" : "activar"} el
+              área{" "}
               <strong className="text-gray-900">
-                {selectedClienteForStatus?.nombre_principal}
+                {selectedAreaForStatus?.nombre_area}
               </strong>
               ?
             </AlertDialogDescription>
@@ -126,7 +134,7 @@ const ClientsPage = () => {
             <AlertDialogAction
               onClick={handleConfirmToggleStatus}
               className={
-                selectedClienteForStatus?.is_active
+                selectedAreaForStatus?.is_active
                   ? "bg-red-600 hover:bg-red-700 text-white"
                   : "bg-emerald-600 hover:bg-emerald-700 text-white"
               }
@@ -138,6 +146,6 @@ const ClientsPage = () => {
       </AlertDialog>
     </div>
   );
-};
+}
 
-export default ClientsPage;
+export default AreaPage;
