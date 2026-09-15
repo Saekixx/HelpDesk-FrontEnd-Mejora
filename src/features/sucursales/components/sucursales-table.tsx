@@ -120,7 +120,7 @@ export const SucursalesTable = ({
                       variant="outline"
                       className="bg-blue-50 text-blue-600 border-blue-100 font-medium text-xs px-2.5 py-0.5 rounded-md"
                     >
-                      {sucursal.total_areas ?? 1} Sedes
+                      {sucursal.total_areas ?? 1} Areas
                     </Badge>
                   </TableCell>
 

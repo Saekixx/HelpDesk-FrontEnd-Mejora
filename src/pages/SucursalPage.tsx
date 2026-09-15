@@ -1,13 +1,20 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+
 import { useSucursales } from "@/features/sucursales/hooks/useSucursal";
-import { sucursalService } from "@/features/sucursales/services/sucursales.service";
+import { useSucursalMutations } from "@/features/sucursales/hooks/useSucursalMutations";
+
 import { SucursalesFilters } from "@/features/sucursales/components/sucursales-filters";
 import { SucursalesTable } from "@/features/sucursales/components/sucursales-table";
+import { SucursalDetailsModal } from "@/features/sucursales/components/SucursalDetailsModal";
+import { SucursalFormModal } from "@/features/sucursales/components/SucursalFormModal";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+
 import { SucursalListItem } from "@/features/sucursales/types/sucursal.entity";
 import { GetSucursalesFilterDto } from "@/features/sucursales/types/sucursal.dtos";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,25 +27,55 @@ import {
 } from "@/components/ui/alert-dialog";
 
 function SucursalPage() {
-  // Importamos y desestructuramos exactamente igual que en ClientesPage
   const { sucursales, meta, loading, setPage, setFilterValues, refetch } =
     useSucursales();
 
-  // Estado para el modal de confirmación de cambio de estado
+  const { toggleStatus, isSubmitting } = useSucursalMutations({
+    onSuccess: () => refetch(),
+  });
+
+  const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
+  const [sucursalToEdit, setSucursalToEdit] = useState<SucursalListItem | null>(
+    null,
+  );
+
+  const [selectedSucursalForDetails, setSelectedSucursalForDetails] =
+    useState<SucursalListItem | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
+
   const [selectedSucursalForStatus, setSelectedSucursalForStatus] =
     useState<SucursalListItem | null>(null);
 
-  // Handlers para abrir modales y acciones
   const handleOpenCreateModal = () => {
-    // Modal de creación de sucursal
+    setSucursalToEdit(null);
+    setIsFormModalOpen(true);
   };
 
   const handleOpenEditModal = (sucursal: SucursalListItem) => {
-    // Modal de edición de sucursal
+    setSucursalToEdit(sucursal);
+    setIsFormModalOpen(true);
+  };
+
+  const handleCloseFormModal = () => {
+    setIsFormModalOpen(false);
+    setSucursalToEdit(null);
+  };
+
+  const handleFormSuccess = () => {
+    toast.success(
+      `Sucursal ${sucursalToEdit ? "actualizada" : "creada"} con éxito`,
+    );
+    refetch();
   };
 
   const handleViewDetails = (sucursal: SucursalListItem) => {
-    // Detalle de la sucursal
+    setSelectedSucursalForDetails(sucursal);
+    setIsDetailsOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setIsDetailsOpen(false);
+    setSelectedSucursalForDetails(null);
   };
 
   const handleApplyFilters = (filters: Partial<GetSucursalesFilterDto>) => {
@@ -47,18 +84,19 @@ function SucursalPage() {
 
   const handleConfirmToggleStatus = async () => {
     if (!selectedSucursalForStatus) return;
-    try {
-      // Llamar al método de toggle status correspondiente del service u hook de mutaciones
-      setSelectedSucursalForStatus(null);
-      refetch();
-    } catch (error) {
-      console.error("Error al cambiar el estado de la sucursal:", error);
-    }
+    const isActivating = !selectedSucursalForStatus.is_active;
+
+    toast.promise(toggleStatus(selectedSucursalForStatus.id_sucursal), {
+      loading: "Actualizando estado de la sucursal...",
+      success: `Sucursal ${isActivating ? "activada" : "desactivada"} correctamente`,
+      error: "Ocurrió un error al cambiar el estado de la sucursal",
+    });
+
+    setSelectedSucursalForStatus(null);
   };
 
   return (
     <div className="p-6 space-y-6">
-      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -78,13 +116,11 @@ function SucursalPage() {
         </Button>
       </div>
 
-      {/* Barra de Filtros */}
       <SucursalesFilters
         onApplyFilters={handleApplyFilters}
         onNewSucursal={handleOpenCreateModal}
       />
 
-      {/* Tabla y Paginación */}
       {loading ? (
         <div className="p-12 text-center text-sm text-gray-500 bg-white rounded-lg border border-gray-200">
           Cargando sucursales...
@@ -110,7 +146,19 @@ function SucursalPage() {
         </div>
       )}
 
-      {/* Modal de confirmación para activar/desactivar */}
+      <SucursalFormModal
+        isOpen={isFormModalOpen}
+        onClose={handleCloseFormModal}
+        sucursalToEdit={sucursalToEdit}
+        onSuccess={handleFormSuccess}
+      />
+
+      <SucursalDetailsModal
+        isOpen={isDetailsOpen}
+        onClose={handleCloseDetails}
+        sucursal={selectedSucursalForDetails}
+      />
+
       <AlertDialog
         open={!!selectedSucursalForStatus}
         onOpenChange={(open: boolean) =>
@@ -136,16 +184,19 @@ function SucursalPage() {
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSubmitting}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmToggleStatus}
+              disabled={isSubmitting}
               className={
                 selectedSucursalForStatus?.is_active
                   ? "bg-red-600 hover:bg-red-700 text-white"
                   : "bg-emerald-600 hover:bg-emerald-700 text-white"
               }
             >
-              Confirmar
+              {isSubmitting ? "Procesando..." : "Confirmar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

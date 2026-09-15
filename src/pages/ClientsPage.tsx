@@ -1,11 +1,23 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+
+// Hooks
 import { useClientes } from "@/features/clientes/hooks/useClientes";
+import { useClienteMutations } from "@/features/clientes/hooks/useClienteMutations";
+
+// Componentes
 import { ClientesFilters } from "@/features/clientes/components/clientes-filters";
 import { ClientesTable } from "@/features/clientes/components/clientes-table";
+import { ClienteDetailsModal } from "@/features/clientes/components/ClienteDetailsModal";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+
+// Tipos
 import { Cliente } from "@/features/clientes/types/cliente.entity";
+import { ClienteDetail } from "@/features/clientes/types/cliente.response";
+
+// UI Dialogs
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,35 +30,89 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const ClientsPage = () => {
-  const { clientes, meta, loading, setPage, setFilterValues, refetch } =
-    useClientes();
+  const {
+    clientes,
+    meta,
+    loading,
+    setPage,
+    setFilterValues,
+    refetch,
+    getClienteDetails,
+  } = useClientes();
+
+  const { toggleStatus, isSubmitting: isMutating } = useClienteMutations({
+    onSuccess: () => refetch(),
+  });
+
+  // Estados para Modal de Creación / Edición
+  const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
+  const [clienteToEdit, setClienteToEdit] = useState<Cliente | null>(null);
 
   // Estado para el modal de confirmación de cambio de estado
   const [selectedClienteForStatus, setSelectedClienteForStatus] =
     useState<Cliente | null>(null);
 
-  // Handlers para las acciones
+  // Estados para el Modal de Detalles
+  const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
+  const [selectedClienteDetail, setSelectedClienteDetail] =
+    useState<ClienteDetail | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState<boolean>(false);
+
+  // Handlers para Creación / Edición
   const handleOpenCreateModal = () => {
-    // Lógica para abrir el modal de creación de cliente cuando esté disponible
+    setClienteToEdit(null);
+    setIsFormModalOpen(true);
   };
 
   const handleOpenEditModal = (cliente: Cliente) => {
-    // Lógica para abrir el modal de edición cuando esté disponible
+    setClienteToEdit(cliente);
+    setIsFormModalOpen(true);
   };
 
-  const handleViewDetails = (cliente: Cliente) => {
-    // Lógica para ver el detalle del cliente cuando esté disponible
+  const handleCloseFormModal = () => {
+    setIsFormModalOpen(false);
+    setClienteToEdit(null);
   };
 
+  const handleFormSuccess = () => {
+    toast.success(
+      `Empresa ${clienteToEdit ? "actualizada" : "creada"} con éxito`,
+    );
+    refetch();
+  };
+
+  // Abrir Modal de Detalles y cargar datos del backend (/clientes/{id})
+  const handleViewDetails = async (cliente: Cliente) => {
+    setIsDetailsOpen(true);
+    setLoadingDetails(true);
+    try {
+      const detail = await getClienteDetails(cliente.id_cliente);
+      setSelectedClienteDetail(detail);
+    } catch (err) {
+      toast.error("Error al obtener los detalles de la empresa");
+      console.error("Error al obtener detalles del cliente:", err);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const handleCloseDetailsModal = () => {
+    setIsDetailsOpen(false);
+    setSelectedClienteDetail(null);
+  };
+
+  // Confirmar el cambio de estado (Toggle Status)
   const handleConfirmToggleStatus = async () => {
     if (!selectedClienteForStatus) return;
-    try {
-      // Llamar al método de toggle status correspondiente del service u hook de mutaciones
-      setSelectedClienteForStatus(null);
-      refetch();
-    } catch {
-      // Manejar error si aplica
-    }
+    const isActivating = !selectedClienteForStatus.is_active;
+
+    toast.promise(toggleStatus(selectedClienteForStatus.id_cliente), {
+      loading: "Actualizando estado de la empresa...",
+      success: `Empresa ${isActivating ? "activada" : "desactivada"} correctamente`,
+      error: "Ocurrió un error al cambiar el estado de la empresa",
+    });
+
+    setSelectedClienteForStatus(null);
   };
 
   return (
@@ -97,6 +163,14 @@ const ClientsPage = () => {
         </>
       )}
 
+      {/* Modal de Detalle de Cliente */}
+      <ClienteDetailsModal
+        isOpen={isDetailsOpen}
+        onClose={handleCloseDetailsModal}
+        cliente={selectedClienteDetail}
+        loading={loadingDetails}
+      />
+
       {/* Modal de confirmación para cambiar estado del cliente */}
       <AlertDialog
         open={!!selectedClienteForStatus}
@@ -122,16 +196,19 @@ const ClientsPage = () => {
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isMutating}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmToggleStatus}
+              disabled={isMutating}
               className={
                 selectedClienteForStatus?.is_active
                   ? "bg-red-600 hover:bg-red-700 text-white"
                   : "bg-emerald-600 hover:bg-emerald-700 text-white"
               }
             >
-              Confirmar
+              {isMutating ? "Procesando..." : "Confirmar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

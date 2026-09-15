@@ -1,17 +1,20 @@
 import { api } from "@/lib/axios";
-import { Sucursal } from "../types/sucursal.entity";
+import { SucursalListItem } from "../types/sucursal.entity";
 import {
   CreateSucursalDto,
   UpdateSucursalDto,
   GetSucursalesFilterDto,
   OptionDto,
 } from "../types/sucursal.dtos";
-import { PaginatedSucursalesResponse } from "../types/sucursal.response";
+import {
+  PaginatedSucursalesResponse,
+  SucursalMutationResponse,
+} from "../types/sucursal.response";
 
 export const sucursalService = {
   /**
    * GET /sucursales
-   * Listar sucursales con paginación, filtros y búsqueda
+   * Listar sucursales con paginación y filtros
    */
   getSucursales: async (filters: GetSucursalesFilterDto) => {
     const { data } = await api.get<PaginatedSucursalesResponse>("/sucursales", {
@@ -33,13 +36,18 @@ export const sucursalService = {
    * POST /sucursales
    * Crear una sucursal
    */
-  createSucursal: async (data: CreateSucursalDto): Promise<Sucursal> => {
-    const response = await api.post<Sucursal>("/sucursales", data);
-    return response.data;
+  createSucursal: async (
+    data: CreateSucursalDto,
+  ): Promise<SucursalListItem> => {
+    const response = await api.post<SucursalMutationResponse>(
+      "/sucursales",
+      data,
+    );
+    return response.data.data;
   },
 
   /**
-   * GET /sucursales/{id}/options
+   * GET /sucursales/{clienteId}/options
    * Listar sucursales de un cliente en formato opción
    */
   getSucursalesOptions: async (clienteId: number): Promise<OptionDto[]> => {
@@ -51,11 +59,13 @@ export const sucursalService = {
 
   /**
    * GET /sucursales/{id}
-   * Obtener una sucursal por ID
+   * Obtener sucursal por ID
    */
-  getSucursalById: async (id: number): Promise<Sucursal> => {
-    const response = await api.get<Sucursal>(`/sucursales/${id}`);
-    return response.data;
+  getSucursalById: async (id: number): Promise<SucursalListItem> => {
+    const response = await api.get<SucursalMutationResponse>(
+      `/sucursales/${id}`,
+    );
+    return response.data.data;
   },
 
   /**
@@ -65,19 +75,22 @@ export const sucursalService = {
   updateSucursal: async (
     id: number,
     data: UpdateSucursalDto,
-  ): Promise<Sucursal> => {
-    const response = await api.patch<Sucursal>(`/sucursales/${id}`, data);
-    return response.data;
+  ): Promise<SucursalListItem> => {
+    const response = await api.patch<SucursalMutationResponse>(
+      `/sucursales/${id}`,
+      data,
+    );
+    return response.data.data;
   },
 
   /**
    * PATCH /sucursales/{id}/toggle-status
    * Activar / desactivar sucursal
    */
-  toggleSucursalStatus: async (id: number): Promise<Sucursal> => {
-    const response = await api.patch<Sucursal>(
+  toggleSucursalStatus: async (id: number): Promise<SucursalListItem> => {
+    const response = await api.patch<SucursalMutationResponse>(
       `/sucursales/${id}/toggle-status`,
     );
-    return response.data;
+    return response.data.data;
   },
 };

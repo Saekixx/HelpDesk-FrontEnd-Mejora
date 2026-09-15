@@ -5,7 +5,12 @@ import {
   UpdateClienteDto,
   GetClientesQueryDto,
 } from "../types/cliente.dtos";
-import { OptionDto } from "../types/cliente.response";
+import {
+  OptionDto,
+  ClienteDetail,
+  ClienteDetailApiResponse,
+  ClienteMutationResponse,
+} from "../types/cliente.response";
 
 export const clienteService = {
   /**
@@ -15,7 +20,6 @@ export const clienteService = {
   getClientes: async (filters: GetClientesQueryDto) => {
     const { data } = await api.get("/clientes", { params: filters });
 
-    // Desempaquetado del JSON de backend ({ status, message, data: { data: [], total, ... } })
     return {
       clientes: (data?.data?.data as Cliente[]) || [],
       meta: {
@@ -32,8 +36,8 @@ export const clienteService = {
    * Crear un cliente
    */
   createCliente: async (data: CreateClienteDto): Promise<Cliente> => {
-    const response = await api.post<Cliente>("/clientes", data);
-    return response.data;
+    const response = await api.post<ClienteMutationResponse>("/clientes", data);
+    return response.data.data;
   },
 
   /**
@@ -47,11 +51,11 @@ export const clienteService = {
 
   /**
    * GET /clientes/{id}
-   * Obtener un cliente por su ID
+   * Obtener el detalle completo de un cliente por su ID (incluye plan y sucursales)
    */
-  getClienteById: async (id: number): Promise<Cliente> => {
-    const response = await api.get<Cliente>(`/clientes/${id}`);
-    return response.data;
+  getClienteById: async (id: number): Promise<ClienteDetail> => {
+    const response = await api.get<ClienteDetailApiResponse>(`/clientes/${id}`);
+    return response.data.data;
   },
 
   /**
@@ -62,8 +66,11 @@ export const clienteService = {
     id: number,
     data: UpdateClienteDto,
   ): Promise<Cliente> => {
-    const response = await api.patch<Cliente>(`/clientes/${id}`, data);
-    return response.data;
+    const response = await api.patch<ClienteMutationResponse>(
+      `/clientes/${id}`,
+      data,
+    );
+    return response.data.data;
   },
 
   /**
@@ -71,7 +78,9 @@ export const clienteService = {
    * Activar / desactivar el estado de un cliente
    */
   toggleClienteStatus: async (id: number): Promise<Cliente> => {
-    const response = await api.patch<Cliente>(`/clientes/${id}/toggle-status`);
-    return response.data;
+    const response = await api.patch<ClienteMutationResponse>(
+      `/clientes/${id}/toggle-status`,
+    );
+    return response.data.data;
   },
 };

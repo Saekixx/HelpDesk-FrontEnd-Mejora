@@ -1,7 +1,8 @@
 import { SucursalListItem } from "./sucursal.entity";
 
 export interface PaginatedSucursalesResponse {
-  statusCode: number;
+  status?: number;
+  statusCode?: number;
   message: string;
   data: {
     data: SucursalListItem[];
@@ -10,4 +11,10 @@ export interface PaginatedSucursalesResponse {
     limit: number;
     totalPages: number;
   };
+}
+
+export interface SucursalMutationResponse {
+  status?: number;
+  message: string;
+  data: SucursalListItem;
 }

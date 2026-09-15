@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, RotateCcw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,7 +22,6 @@ export const UsersFilters = ({ onApplyFilters }: UsersFiltersProps) => {
   const [status, setStatus] = useState("ALL");
 
   const { roles: rolesOptions, loading } = useCatalogOptions();
-  // Obtenemos el objeto seleccionado para renderizar su label limpia
   const selectedRole = rolesOptions.find((opt) => String(opt.value) === roleId);
 
   const handleApply = () => {
@@ -37,6 +36,20 @@ export const UsersFilters = ({ onApplyFilters }: UsersFiltersProps) => {
     });
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setRoleId("ALL");
+    setStatus("ALL");
+    onApplyFilters({
+      search: undefined,
+      id_rol: undefined,
+      is_active: undefined,
+    });
+  };
+
+  const hasActiveFilters =
+    search.trim() !== "" || roleId !== "ALL" || status !== "ALL";
+
   return (
     <div className="flex flex-col sm:flex-row items-center gap-3">
       {/* Input de búsqueda */}
@@ -46,6 +59,7 @@ export const UsersFilters = ({ onApplyFilters }: UsersFiltersProps) => {
           placeholder="Buscar por nombre, correo o empresa..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleApply()}
           className="pl-9 bg-white border-gray-200"
         />
       </div>
@@ -106,6 +120,18 @@ export const UsersFilters = ({ onApplyFilters }: UsersFiltersProps) => {
         <Filter className="h-4 w-4" />
         Aplicar Filtros
       </Button>
+
+      {/* Botón Limpiar Filtros */}
+      {hasActiveFilters && (
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="w-full sm:w-auto border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Limpiar
+        </Button>
+      )}
     </div>
   );
 };

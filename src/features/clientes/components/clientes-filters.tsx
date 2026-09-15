@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, RotateCcw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -34,6 +34,20 @@ export const ClientesFilters = ({ onApplyFilters }: ClientesFiltersProps) => {
     });
   };
 
+  const handleReset = () => {
+    setSearch("");
+    setTipoCliente("ALL");
+    setStatus("ALL");
+    onApplyFilters({
+      search: undefined,
+      tipo_cliente: undefined,
+      is_active: undefined,
+    });
+  };
+
+  const hasActiveFilters =
+    search.trim() !== "" || tipoCliente !== "ALL" || status !== "ALL";
+
   return (
     <div className="flex flex-col sm:flex-row items-center gap-3">
       {/* Input de búsqueda */}
@@ -43,6 +57,7 @@ export const ClientesFilters = ({ onApplyFilters }: ClientesFiltersProps) => {
           placeholder="Buscar por nombre, documento o correo..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleApply()}
           className="pl-9 bg-white border-gray-200"
         />
       </div>
@@ -93,6 +108,18 @@ export const ClientesFilters = ({ onApplyFilters }: ClientesFiltersProps) => {
         <Filter className="h-4 w-4" />
         Aplicar Filtros
       </Button>
+
+      {/* Botón Limpiar Filtros */}
+      {hasActiveFilters && (
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="w-full sm:w-auto border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Limpiar
+        </Button>
+      )}
     </div>
   );
 };

@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export interface SucursalCliente {
   id_cliente: number;
-  nombre_principal: string;
+  nombre?: string;
+  nombre_principal?: string;
 }
 
 export interface SucursalListItem {
@@ -12,12 +14,10 @@ export interface SucursalListItem {
   correo: string;
   id_cliente: number;
   is_active: boolean;
-  created_at?: string | Date;
-  updated_at?: string | Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
   total_areas?: number;
   cliente?: SucursalCliente;
 }
 
-export interface Sucursal extends SucursalListItem {
-  cliente?: SucursalCliente;
-}
+export interface Sucursal extends SucursalListItem {}
