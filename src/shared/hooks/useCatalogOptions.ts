@@ -6,6 +6,7 @@ import {
   getClientesOptions,
   getSucursalesOptions,
   getAreasOptions,
+  getPlanesOptions,
 } from "../services/catalog.service";
 
 export const useCatalogOptions = () => {
@@ -14,6 +15,7 @@ export const useCatalogOptions = () => {
   const [clientes, setClientes] = useState<SelectOption<number>[]>([]);
   const [sucursales, setSucursales] = useState<SelectOption<number>[]>([]);
   const [areas, setAreas] = useState<SelectOption<number>[]>([]);
+  const [planes, setPlanes] = useState<SelectOption<number>[]>([]);
 
   // Estados para controlar las dependencias en cascada
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(
@@ -28,24 +30,29 @@ export const useCatalogOptions = () => {
   const [loadingClientes, setLoadingClientes] = useState<boolean>(false);
   const [loadingSucursales, setLoadingSucursales] = useState<boolean>(false);
   const [loadingAreas, setLoadingAreas] = useState<boolean>(false);
+  const [loadingPlanes, setLoadingPlanes] = useState<boolean>(false);
 
-  // 1. Cargar catálogos independientes al montar (Roles y Clientes)
+  // 1. Cargar catálogos independientes al montar (Roles, Clientes y Planes)
   useEffect(() => {
     const fetchInitialCatalogs = async () => {
       setLoadingRoles(true);
       setLoadingClientes(true);
+      setLoadingPlanes(true);
       try {
-        const [rolesData, clientesData] = await Promise.all([
+        const [rolesData, clientesData, planesData] = await Promise.all([
           getRolesOptions(),
           getClientesOptions(),
+          getPlanesOptions(),
         ]);
         setRoles(rolesData);
         setClientes(clientesData);
+        setPlanes(planesData);
       } catch (error) {
         console.error("Error al cargar catálogos iniciales", error);
       } finally {
         setLoadingRoles(false);
         setLoadingClientes(false);
+        setLoadingPlanes(false);
       }
     };
 
@@ -107,17 +114,19 @@ export const useCatalogOptions = () => {
     clientes,
     sucursales,
     areas,
+    planes,
 
     // Métodos para cambiar la dependencia
     setSelectedClienteId,
     setSelectedSucursalId,
 
-    // Estados de carga (útil para spinners dentro del Select/Combobox)
+    // Estados de carga
     loading: {
       roles: loadingRoles,
       clientes: loadingClientes,
       sucursales: loadingSucursales,
       areas: loadingAreas,
+      planes: loadingPlanes,
     },
   };
 };

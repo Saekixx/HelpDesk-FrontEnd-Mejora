@@ -13,11 +13,6 @@ export interface OptionDto {
   label: string;
 }
 
-export interface ClienteMutationResponse {
-  message: string;
-  data: Cliente;
-}
-
 export interface PlanDetail {
   id_plan: number;
   nombre: string;
@@ -30,10 +25,10 @@ export interface PlanDetail {
 export interface SucursalDetail {
   id_sucursal: number;
   nombre: string;
-  encargado: string;
-  telefono: string;
-  correo: string;
-  direccion: string;
+  encargado?: string;
+  telefono?: string;
+  correo?: string;
+  direccion?: string;
   is_active: boolean;
 }
 
@@ -43,6 +38,11 @@ export interface ClienteDetail extends Cliente {
   fecha_registro?: Date | string;
   plan?: PlanDetail;
   sucursales?: SucursalDetail[];
+}
+
+export interface ClienteMutationResponse {
+  message: string;
+  data: ClienteDetail;
 }
 
 export interface ClienteDetailApiResponse {

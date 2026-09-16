@@ -59,3 +59,15 @@ export const getAreasOptions = async (
     label: branch.nombre,
   }));
 };
+
+// GET /planes/options -> Obtener opciones de planes
+export const getPlanesOptions = async (): Promise<SelectOption<number>[]> => {
+  const response = await api.get<{
+    data: { id: number; nombre: string }[];
+  }>("/planes/options");
+  const plansArray = response.data.data;
+  return plansArray.map((plan) => ({
+    value: plan.id,
+    label: plan.nombre,
+  }));
+};

@@ -1,5 +1,26 @@
 import { TipoCliente } from "./cliente.entity";
 
+// Estructura para la sucursal principal al crear (requiere campos base)
+export interface SucursalPrincipalCreateDto {
+  nombre?: string;
+  telefono?: string;
+}
+
+// Estructura para la sucursal principal al actualizar (parcial)
+export interface SucursalPrincipalUpdateDto {
+  nombre?: string;
+  telefono?: string;
+}
+
+// Estructura para sucursales adicionales
+export interface SucursalAdicionalDto {
+  nombre: string;
+  encargado?: string;
+  telefono?: string;
+  correo?: string;
+  direccion?: string;
+}
+
 export interface CreateClienteDto {
   tipo_cliente: TipoCliente;
   numero_documento: string;
@@ -14,6 +35,8 @@ export interface CreateClienteDto {
   limite_equipos_contratado: number;
   id_plan: number;
   is_active?: boolean;
+  sucursal_principal?: SucursalPrincipalCreateDto;
+  sucursales_adicionales?: SucursalAdicionalDto[];
 }
 
 export interface UpdateClienteDto {
@@ -29,7 +52,9 @@ export interface UpdateClienteDto {
   costo_negociado?: number;
   limite_equipos_contratado?: number;
   id_plan?: number;
-  is_active?: boolean;
+  // Omitimos is_active del DTO de edición ya que se gestiona vía toggle-status
+  sucursal_principal?: SucursalPrincipalUpdateDto;
+  sucursales_adicionales?: SucursalAdicionalDto[];
 }
 
 export interface GetClientesQueryDto {

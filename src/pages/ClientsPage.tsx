@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import { useClienteMutations } from "@/features/clientes/hooks/useClienteMutatio
 import { ClientesFilters } from "@/features/clientes/components/clientes-filters";
 import { ClientesTable } from "@/features/clientes/components/clientes-table";
 import { ClienteDetailsModal } from "@/features/clientes/components/ClienteDetailsModal";
+import { ClienteModal } from "@/features/clientes/components/ClienteModal";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 
 // Tipos
@@ -28,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
 
 const ClientsPage = () => {
   const {
@@ -40,48 +43,78 @@ const ClientsPage = () => {
     getClienteDetails,
   } = useClientes();
 
-  const { toggleStatus, isSubmitting: isMutating } = useClienteMutations({
+  // Desestructuramos createCliente y updateCliente desde la Page
+  const {
+    createCliente,
+    updateCliente,
+    toggleStatus,
+    isSubmitting: isMutating,
+  } = useClienteMutations({
     onSuccess: () => refetch(),
   });
 
-  // Estados para Modal de Creación / Edición
+  const { planes } = useCatalogOptions();
+
+  // Estados para Modal de Formulario (Creación / Edición)
   const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
-  const [clienteToEdit, setClienteToEdit] = useState<Cliente | null>(null);
+  const [clienteToEditDetail, setClienteToEditDetail] =
+    useState<ClienteDetail | null>(null);
 
   // Estado para el modal de confirmación de cambio de estado
   const [selectedClienteForStatus, setSelectedClienteForStatus] =
     useState<Cliente | null>(null);
 
-  // Estados para el Modal de Detalles
+  // Estados para el Modal de Detalles (Lectura)
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
   const [selectedClienteDetail, setSelectedClienteDetail] =
     useState<ClienteDetail | null>(null);
   const [loadingDetails, setLoadingDetails] = useState<boolean>(false);
 
-  // Handlers para Creación / Edición
+  // Handlers para Creación / Edición con Toast Incorporado
+  const handleCreateCliente = async (data: any) => {
+    toast.promise(createCliente(data), {
+      loading: "Creando empresa...",
+      success: () => {
+        handleCloseFormModal();
+        return "Empresa creada exitosamente";
+      },
+      error: (err) => err?.message || "Error al crear la empresa",
+    });
+  };
+
+  const handleUpdateCliente = async (id: number, data: any) => {
+    toast.promise(updateCliente(id, data), {
+      loading: "Actualizando empresa...",
+      success: () => {
+        handleCloseFormModal();
+        return "Empresa actualizada exitosamente";
+      },
+      error: (err) => err?.message || "Error al actualizar la empresa",
+    });
+  };
+
   const handleOpenCreateModal = () => {
-    setClienteToEdit(null);
+    setClienteToEditDetail(null);
     setIsFormModalOpen(true);
   };
 
-  const handleOpenEditModal = (cliente: Cliente) => {
-    setClienteToEdit(cliente);
-    setIsFormModalOpen(true);
+  const handleOpenEditModal = async (cliente: Cliente) => {
+    try {
+      const detail = await getClienteDetails(cliente.id_cliente);
+      setClienteToEditDetail(detail);
+      setIsFormModalOpen(true);
+    } catch (err) {
+      toast.error("Error al obtener la información de la empresa a editar");
+      console.error(err);
+    }
   };
 
   const handleCloseFormModal = () => {
     setIsFormModalOpen(false);
-    setClienteToEdit(null);
+    setClienteToEditDetail(null);
   };
 
-  const handleFormSuccess = () => {
-    toast.success(
-      `Empresa ${clienteToEdit ? "actualizada" : "creada"} con éxito`,
-    );
-    refetch();
-  };
-
-  // Abrir Modal de Detalles y cargar datos del backend (/clientes/{id})
+  // Abrir Modal de Detalles (Solo lectura)
   const handleViewDetails = async (cliente: Cliente) => {
     setIsDetailsOpen(true);
     setLoadingDetails(true);
@@ -163,7 +196,18 @@ const ClientsPage = () => {
         </>
       )}
 
-      {/* Modal de Detalle de Cliente */}
+      {/* Modal de Formulario para Crear / Editar Cliente con handlers pasados por props */}
+      <ClienteModal
+        isOpen={isFormModalOpen}
+        onClose={handleCloseFormModal}
+        clienteEditar={clienteToEditDetail}
+        planesOptions={planes}
+        onCreate={handleCreateCliente}
+        onUpdate={handleUpdateCliente}
+        isSubmitting={isMutating}
+      />
+
+      {/* Modal de Detalle de Cliente (Lectura) */}
       <ClienteDetailsModal
         isOpen={isDetailsOpen}
         onClose={handleCloseDetailsModal}

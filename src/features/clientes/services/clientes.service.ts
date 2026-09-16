@@ -33,9 +33,9 @@ export const clienteService = {
 
   /**
    * POST /clientes
-   * Crear un cliente
+   * Crear un cliente (soporta sucursal principal y adicionales)
    */
-  createCliente: async (data: CreateClienteDto): Promise<Cliente> => {
+  createCliente: async (data: CreateClienteDto): Promise<ClienteDetail> => {
     const response = await api.post<ClienteMutationResponse>("/clientes", data);
     return response.data.data;
   },
@@ -65,10 +65,14 @@ export const clienteService = {
   updateCliente: async (
     id: number,
     data: UpdateClienteDto,
-  ): Promise<Cliente> => {
+  ): Promise<ClienteDetail> => {
+    // Garantiza que la propiedad is_active no se envíe al endpoint de edición
+    const { ...payload } = data as UpdateClienteDto & { is_active?: boolean };
+    delete payload.is_active;
+
     const response = await api.patch<ClienteMutationResponse>(
       `/clientes/${id}`,
-      data,
+      payload,
     );
     return response.data.data;
   },
@@ -77,7 +81,7 @@ export const clienteService = {
    * PATCH /clientes/{id}/toggle-status
    * Activar / desactivar el estado de un cliente
    */
-  toggleClienteStatus: async (id: number): Promise<Cliente> => {
+  toggleClienteStatus: async (id: number): Promise<ClienteDetail> => {
     const response = await api.patch<ClienteMutationResponse>(
       `/clientes/${id}/toggle-status`,
     );

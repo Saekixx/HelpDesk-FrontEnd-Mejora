@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { clienteService } from "../services/clientes.service";
 import { CreateClienteDto, UpdateClienteDto } from "../types/cliente.dtos";
-import { Cliente } from "../types/cliente.entity";
+import { ClienteDetail } from "../types/cliente.response";
 
 interface UseClienteMutationsOptions {
   onSuccess?: () => void;
+  onError?: (error: string) => void;
 }
 
 export const useClienteMutations = (options?: UseClienteMutationsOptions) => {
@@ -16,7 +17,7 @@ export const useClienteMutations = (options?: UseClienteMutationsOptions) => {
    */
   const createCliente = async (
     data: CreateClienteDto,
-  ): Promise<Cliente | null> => {
+  ): Promise<ClienteDetail | null> => {
     setIsSubmitting(true);
     setError(null);
     try {
@@ -27,6 +28,7 @@ export const useClienteMutations = (options?: UseClienteMutationsOptions) => {
       const msg =
         err instanceof Error ? err.message : "Error al crear el cliente";
       setError(msg);
+      options?.onError?.(msg);
       return null;
     } finally {
       setIsSubmitting(false);
@@ -39,7 +41,7 @@ export const useClienteMutations = (options?: UseClienteMutationsOptions) => {
   const updateCliente = async (
     id: number,
     data: UpdateClienteDto,
-  ): Promise<Cliente | null> => {
+  ): Promise<ClienteDetail | null> => {
     setIsSubmitting(true);
     setError(null);
     try {
@@ -50,6 +52,7 @@ export const useClienteMutations = (options?: UseClienteMutationsOptions) => {
       const msg =
         err instanceof Error ? err.message : "Error al actualizar el cliente";
       setError(msg);
+      options?.onError?.(msg);
       return null;
     } finally {
       setIsSubmitting(false);
@@ -59,7 +62,7 @@ export const useClienteMutations = (options?: UseClienteMutationsOptions) => {
   /**
    * Cambiar estado activo/inactivo de un cliente (PATCH /clientes/{id}/toggle-status)
    */
-  const toggleStatus = async (id: number): Promise<Cliente | null> => {
+  const toggleStatus = async (id: number): Promise<ClienteDetail | null> => {
     setIsSubmitting(true);
     setError(null);
     try {
@@ -72,6 +75,7 @@ export const useClienteMutations = (options?: UseClienteMutationsOptions) => {
           ? err.message
           : "Error al cambiar el estado del cliente";
       setError(msg);
+      options?.onError?.(msg);
       return null;
     } finally {
       setIsSubmitting(false);
