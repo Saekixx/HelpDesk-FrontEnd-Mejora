@@ -49,32 +49,41 @@ export const UserFormFields = ({
   const selectedClienteId = watch("id_cliente");
   const selectedSucursalId = watch("id_sucursal");
 
-  const normalizeOptions = (
-    opts: any[],
-    valKey = "value",
-    labelKey = "label",
-  ) => {
+  // Deduplicación estricta basada en el texto visible del label
+  const normalizeOptions = (opts: any[]) => {
     if (!Array.isArray(opts)) return [];
-    return opts.map((opt) => ({
-      value: Number(opt[valKey] ?? opt.value ?? opt.id),
-      label: String(
-        opt[labelKey] ?? opt.label ?? opt.nombre ?? opt.razon_social ?? "",
-      ),
-    }));
+
+    const seenLabels = new Set<string>();
+    const result: { value: number; label: string }[] = [];
+
+    opts.forEach((opt) => {
+      const rawVal =
+        opt.id_rol ??
+        opt.id_cliente ??
+        opt.id_sucursal ??
+        opt.id_area ??
+        opt.value ??
+        opt.id;
+
+      const rawLabel = opt.nombre ?? opt.razon_social ?? opt.label ?? "";
+
+      const value = Number(rawVal);
+      const label = String(rawLabel).trim();
+      const normalizedKey = label.toLowerCase();
+
+      if (!isNaN(value) && label && !seenLabels.has(normalizedKey)) {
+        seenLabels.add(normalizedKey);
+        result.push({ value, label });
+      }
+    });
+
+    return result;
   };
 
-  const normalizedRoles = normalizeOptions(rolesOptions, "id_rol", "nombre");
-  const normalizedClientes = normalizeOptions(
-    clientesOptions,
-    "id_cliente",
-    "razon_social",
-  );
-  const normalizedSucursales = normalizeOptions(
-    sucursalesOptions,
-    "id_sucursal",
-    "nombre",
-  );
-  const normalizedAreas = normalizeOptions(areasOptions, "id_area", "nombre");
+  const normalizedRoles = normalizeOptions(rolesOptions);
+  const normalizedClientes = normalizeOptions(clientesOptions);
+  const normalizedSucursales = normalizeOptions(sucursalesOptions);
+  const normalizedAreas = normalizeOptions(areasOptions);
 
   const showCliente = (
     [
@@ -165,7 +174,7 @@ export const UserFormFields = ({
           </SelectTrigger>
           <SelectContent>
             {normalizedRoles.map((r) => (
-              <SelectItem key={r.value} value={String(r.value)}>
+              <SelectItem key={`${r.value}-${r.label}`} value={String(r.value)}>
                 {r.label}
               </SelectItem>
             ))}
@@ -200,7 +209,10 @@ export const UserFormFields = ({
             </SelectTrigger>
             <SelectContent>
               {normalizedClientes.map((c) => (
-                <SelectItem key={c.value} value={String(c.value)}>
+                <SelectItem
+                  key={`${c.value}-${c.label}`}
+                  value={String(c.value)}
+                >
                   {c.label}
                 </SelectItem>
               ))}
@@ -241,7 +253,10 @@ export const UserFormFields = ({
                 </SelectTrigger>
                 <SelectContent>
                   {normalizedSucursales.map((s) => (
-                    <SelectItem key={s.value} value={String(s.value)}>
+                    <SelectItem
+                      key={`${s.value}-${s.label}`}
+                      value={String(s.value)}
+                    >
                       {s.label}
                     </SelectItem>
                   ))}
@@ -277,7 +292,10 @@ export const UserFormFields = ({
                 </SelectTrigger>
                 <SelectContent>
                   {normalizedAreas.map((a) => (
-                    <SelectItem key={a.value} value={String(a.value)}>
+                    <SelectItem
+                      key={`${a.value}-${a.label}`}
+                      value={String(a.value)}
+                    >
                       {a.label}
                     </SelectItem>
                   ))}

@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { SelectOption } from "../types/select-option.types";
 import {
   getRolesOptions,
@@ -34,6 +34,8 @@ export const useCatalogOptions = () => {
 
   // 1. Cargar catálogos independientes al montar (Roles, Clientes y Planes)
   useEffect(() => {
+    let isMounted = true;
+
     const fetchInitialCatalogs = async () => {
       setLoadingRoles(true);
       setLoadingClientes(true);
@@ -44,23 +46,34 @@ export const useCatalogOptions = () => {
           getClientesOptions(),
           getPlanesOptions(),
         ]);
-        setRoles(rolesData);
-        setClientes(clientesData);
-        setPlanes(planesData);
+
+        if (isMounted) {
+          setRoles(rolesData || []);
+          setClientes(clientesData || []);
+          setPlanes(planesData || []);
+        }
       } catch (error) {
         console.error("Error al cargar catálogos iniciales", error);
       } finally {
-        setLoadingRoles(false);
-        setLoadingClientes(false);
-        setLoadingPlanes(false);
+        if (isMounted) {
+          setLoadingRoles(false);
+          setLoadingClientes(false);
+          setLoadingPlanes(false);
+        }
       }
     };
 
     fetchInitialCatalogs();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // 2. Cargar sucursales en cascada cuando cambia el cliente seleccionado
   useEffect(() => {
+    let isMounted = true;
+
     if (!selectedClienteId) {
       setSucursales([]);
       setAreas([]);
@@ -72,22 +85,29 @@ export const useCatalogOptions = () => {
       setLoadingSucursales(true);
       try {
         const data = await getSucursalesOptions(selectedClienteId);
-        setSucursales(data);
-        // Limpiamos áreas y la sucursal seleccionada previa
-        setAreas([]);
-        setSelectedSucursalId(null);
+        if (isMounted) {
+          setSucursales(data || []);
+        }
       } catch (error) {
         console.error("Error al cargar sucursales", error);
       } finally {
-        setLoadingSucursales(false);
+        if (isMounted) {
+          setLoadingSucursales(false);
+        }
       }
     };
 
     fetchSucursales();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedClienteId]);
 
   // 3. Cargar áreas en cascada cuando cambia la sucursal seleccionada
   useEffect(() => {
+    let isMounted = true;
+
     if (!selectedSucursalId) {
       setAreas([]);
       return;
@@ -97,16 +117,42 @@ export const useCatalogOptions = () => {
       setLoadingAreas(true);
       try {
         const data = await getAreasOptions(selectedSucursalId);
-        setAreas(data);
+        if (isMounted) {
+          setAreas(data || []);
+        }
       } catch (error) {
         console.error("Error al cargar áreas", error);
       } finally {
-        setLoadingAreas(false);
+        if (isMounted) {
+          setLoadingAreas(false);
+        }
       }
     };
 
     fetchAreas();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedSucursalId]);
+
+  // Memorizamos el objeto loading para evitar renderizados innecesarios en el formulario
+  const loading = useMemo(
+    () => ({
+      roles: loadingRoles,
+      clientes: loadingClientes,
+      sucursales: loadingSucursales,
+      areas: loadingAreas,
+      planes: loadingPlanes,
+    }),
+    [
+      loadingRoles,
+      loadingClientes,
+      loadingSucursales,
+      loadingAreas,
+      loadingPlanes,
+    ],
+  );
 
   return {
     // Listas
@@ -121,12 +167,6 @@ export const useCatalogOptions = () => {
     setSelectedSucursalId,
 
     // Estados de carga
-    loading: {
-      roles: loadingRoles,
-      clientes: loadingClientes,
-      sucursales: loadingSucursales,
-      areas: loadingAreas,
-      planes: loadingPlanes,
-    },
+    loading,
   };
 };

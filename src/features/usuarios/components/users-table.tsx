@@ -161,16 +161,18 @@ export const UsersTable = ({
                     <div className="flex items-center justify-end gap-1">
                       {/* Editar Usuario */}
                       <Tooltip>
-                        <TooltipTrigger>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-gray-500 hover:text-gray-900"
-                            onClick={() => onEdit(user)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-500 hover:text-gray-900"
+                              onClick={() => onEdit(user)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
                         <TooltipContent side="bottom">
                           <p>Editar Usuario</p>
                         </TooltipContent>
@@ -178,20 +180,22 @@ export const UsersTable = ({
 
                       {/* Activar / Desactivar Usuario */}
                       <Tooltip>
-                        <TooltipTrigger>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={`h-8 w-8 transition-colors ${
-                              user.is_active
-                                ? "text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                                : "text-red-500 hover:bg-red-50 hover:text-red-600"
-                            }`}
-                            onClick={() => onToggleStatus(user)}
-                          >
-                            <Power className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={`h-8 w-8 transition-colors ${
+                                user.is_active
+                                  ? "text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                  : "text-red-500 hover:bg-red-50 hover:text-red-600"
+                              }`}
+                              onClick={() => onToggleStatus(user)}
+                            >
+                              <Power className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
                         <TooltipContent side="bottom">
                           <p>
                             {user.is_active

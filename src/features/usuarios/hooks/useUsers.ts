@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/use-memo */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { getUsersService } from "../services/users.service";
 import { GetUsersQueryParams, UserListItem } from "../types/user.entity";
@@ -15,7 +18,9 @@ export const useUsers = (
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<GetUsersQueryParams>(initialParams);
+  const [filters, setFilters] = useState<GetUsersQueryParams>(
+    () => initialParams,
+  );
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -29,10 +34,9 @@ export const useUsers = (
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [JSON.stringify(filters)]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
   }, [fetchUsers]);
 

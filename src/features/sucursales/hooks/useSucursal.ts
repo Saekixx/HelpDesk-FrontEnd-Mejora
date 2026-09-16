@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/use-memo */
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { sucursalService } from "../services/sucursales.service";
@@ -16,7 +18,9 @@ export const useSucursales = (
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<GetSucursalesFilterDto>(initialParams);
+  const [filters, setFilters] = useState<GetSucursalesFilterDto>(
+    () => initialParams,
+  );
 
   const fetchSucursales = useCallback(async () => {
     setLoading(true);
@@ -33,7 +37,7 @@ export const useSucursales = (
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [JSON.stringify(filters)]);
 
   useEffect(() => {
     fetchSucursales();

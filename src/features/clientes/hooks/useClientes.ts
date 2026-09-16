@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/use-memo */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { clienteService } from "../services/clientes.service";
@@ -17,7 +19,9 @@ export const useClientes = (
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<GetClientesQueryDto>(initialParams);
+  const [filters, setFilters] = useState<GetClientesQueryDto>(
+    () => initialParams,
+  );
 
   // Estado adicional para el cliente seleccionado en el modal
   const [selectedCliente, setSelectedCliente] = useState<ClienteDetail | null>(
@@ -40,7 +44,7 @@ export const useClientes = (
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [JSON.stringify(filters)]);
 
   useEffect(() => {
     fetchClientes();

@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/use-memo */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { areaService } from "../services/areas.service";
@@ -16,7 +18,9 @@ export const useAreas = (
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<GetAreasFilterDto>(initialParams);
+  const [filters, setFilters] = useState<GetAreasFilterDto>(
+    () => initialParams,
+  );
 
   const fetchAreas = useCallback(async () => {
     setLoading(true);
@@ -33,7 +37,7 @@ export const useAreas = (
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [JSON.stringify(filters)]);
 
   useEffect(() => {
     fetchAreas();
