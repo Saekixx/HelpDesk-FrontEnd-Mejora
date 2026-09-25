@@ -15,6 +15,7 @@ import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import SucursalPage from "@/pages/SucursalPage";
 import AreaPage from "@/pages/AreaPage";
+import EquiposPage from "@/pages/EquiposPage";
 
 export const AppRouter = () => {
   return (
@@ -35,7 +36,7 @@ export const AppRouter = () => {
           <Route path="/tickets" element={<TicketsPage />} />
 
           {/* Vistas secundarias */}
-          <Route path="/equipos" element={<div>Página Equipos</div>} />
+          <Route path="/equipos" element={<EquiposPage />} />
           <Route path="/citas" element={<div>Página Citas</div>} />
           <Route path="/areas" element={<AreaPage />} />
           <Route path="/sucursales" element={<SucursalPage />} />
