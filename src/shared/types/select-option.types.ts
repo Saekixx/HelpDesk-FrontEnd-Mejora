@@ -5,6 +5,12 @@ export interface RoleOptionResponse {
   createdAt?: string;
 }
 
+// Estructura que retorna el Backend para Opciones de Usuarios / Trabajadores
+export interface UsuarioOptionResponse {
+  id: number;
+  nombre: string;
+}
+
 // Estructura genérica estandarizada para los Selects del Frontend
 export interface SelectOption<T = number | string> {
   value: T;

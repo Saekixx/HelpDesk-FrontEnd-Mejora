@@ -3,13 +3,20 @@ import {
   EquipoDetail,
   EquipoListItem,
   GetEquiposQueryParams,
+  ComponenteHardware,
 } from "../types/equipo.entity";
-import { CreateEquipoDto, UpdateEquipoDto } from "../types/equipo.dtos";
+import {
+  CreateEquipoDto,
+  UpdateEquipoDto,
+  AddHardwareComponentDto,
+  ReplaceHardwareComponentDto,
+} from "../types/equipo.dtos";
 import {
   EquiposApiResponse,
   EquipoSingleApiResponse,
   EquipoDetailApiResponse,
   EquipoActionApiResponse,
+  HardwareComponentApiResponse,
   PaginationMeta,
 } from "../types/equipo.responses";
 
@@ -67,4 +74,28 @@ export const toggleEquipoStatusService = async (
     `/equipos/${id}/toggle-status`,
   );
   return response.data;
+};
+
+// POST /equipos/:id/componentes -> Agregar componente de hardware
+export const addHardwareComponentService = async (
+  equipoId: number,
+  dto: AddHardwareComponentDto,
+): Promise<ComponenteHardware> => {
+  const response = await api.post<HardwareComponentApiResponse>(
+    `/equipos/${equipoId}/componentes`,
+    dto,
+  );
+  return response.data.data;
+};
+
+// POST /equipos/:id/componentes/reemplazar -> Reemplazar componente de hardware
+export const replaceHardwareComponentService = async (
+  equipoId: number,
+  dto: ReplaceHardwareComponentDto,
+): Promise<ComponenteHardware> => {
+  const response = await api.post<HardwareComponentApiResponse>(
+    `/equipos/${equipoId}/componentes/reemplazar`,
+    dto,
+  );
+  return response.data.data;
 };

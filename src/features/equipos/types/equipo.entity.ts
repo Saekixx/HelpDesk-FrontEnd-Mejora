@@ -4,6 +4,37 @@ export interface EntityRelationInfo {
   nombre: string;
 }
 
+// Estructura de un componente de hardware individual
+export interface ComponenteHardware {
+  id_RH: number;
+  tipo: string;
+  marca: string;
+  descripcion: string;
+  serie: string;
+  proveedor: string;
+  fecha_instalacion: string;
+  url_factura: string | null;
+  is_active: boolean;
+}
+
+// Estructura del objeto hardware (componentes actuales e historial)
+export interface HardwareEquipo {
+  componentes_actuales: ComponenteHardware[];
+  historial: ComponenteHardware[];
+}
+
+// Estructura de un software instalado
+export interface SoftwareEquipo {
+  id_software_equipos: number;
+  id_software: number;
+  nombre: string;
+  vencimiento: string;
+  licencia_asignada: string;
+  fecha_instalacion: string;
+  observaciones: string;
+  is_active: boolean;
+}
+
 // Elemento base de equipo utilizado en listados
 export interface EquipoListItem {
   id_equipo: number;
@@ -24,16 +55,13 @@ export interface EquipoListItem {
   trabajador?: EntityRelationInfo | null;
 }
 
-// Detalle completo del equipo (incluye código, fechas y componentes)
+// Detalle completo del equipo
 export interface EquipoDetail extends EquipoListItem {
   codigo?: string;
   ult_revision?: string | null;
   rev_programada?: string | null;
-  hardware?: {
-    componentes_actuales?: Array<Record<string, unknown>>;
-    [key: string]: unknown;
-  };
-  software?: Array<Record<string, unknown>>;
+  hardware?: HardwareEquipo;
+  software?: SoftwareEquipo[];
 }
 
 // Parámetros de consulta para filtrado y paginación

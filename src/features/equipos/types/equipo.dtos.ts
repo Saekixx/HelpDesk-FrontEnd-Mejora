@@ -27,3 +27,20 @@ export interface UpdateEquipoDto {
   id_area?: number | null;
   is_active?: boolean;
 }
+
+// Payload para agregar componente de hardware (POST /equipos/:id/componentes)
+export interface AddHardwareComponentDto {
+  id_hardware: number;
+  serie: string;
+  proveedor: string;
+  descripcion: string;
+}
+
+// Payload para reemplazar componente de hardware (POST /equipos/:id/componentes/reemplazar)
+export interface ReplaceHardwareComponentDto {
+  id_RH_saliente: number;
+  id_hardware_nuevo: number;
+  serie: string;
+  proveedor: string;
+  descripcion: string;
+}

@@ -18,25 +18,65 @@ import { EquipoListItem } from "@/features/equipos/types/equipo.entity";
 import { useEquipoMutations } from "@/features/equipos/hooks/useEquipoMutations";
 import { EquiposFilters } from "@/features/equipos/components/equipos-filters";
 import { EquiposTable } from "@/features/equipos/components/equipos-table";
+import { EquipoModal } from "@/features/equipos/components/EquipoModal";
+import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
 
-const EquiposPage = () => {
+export const EquiposPage = () => {
   const { equipos, meta, loading, setPage, setFilterValues, refetch } =
     useEquipos();
-  const { toggleStatus, loading: isMutating } = useEquipoMutations(refetch);
+  const {
+    createEquipo,
+    updateEquipo,
+    toggleStatus,
+    loading: isMutating,
+  } = useEquipoMutations(refetch);
 
+  // Hook de catálogos para llenar los Selects en cascada
+  const {
+    clientes,
+    sucursales,
+    areas,
+    trabajadores,
+    setSelectedClienteId,
+    setSelectedSucursalId,
+    setSelectedAreaId,
+    loading: loadingCatalogos,
+  } = useCatalogOptions();
+
+  // Estados del Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [equipoToEdit, setEquipoToEdit] = useState<EquipoListItem | null>(null);
+
+  // Estado del AlertDialog para cambio de estado
   const [selectedEquipoForStatus, setSelectedEquipoForStatus] =
     useState<EquipoListItem | null>(null);
 
   const handleOpenCreateModal = () => {
-    // Abrir modal de creación
+    setEquipoToEdit(null);
+    setIsModalOpen(true);
   };
 
   const handleOpenEditModal = (equipo: EquipoListItem) => {
-    // Abrir modal de edición
+    setEquipoToEdit(equipo);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEquipoToEdit(null);
+  };
+
+  const handleCreateEquipo = async (data: any) => {
+    await createEquipo(data);
+    handleCloseModal();
+  };
+
+  const handleUpdateEquipo = async (id: number, data: any) => {
+    await updateEquipo(id, data);
+    handleCloseModal();
   };
 
   const handleViewDetail = (equipo: EquipoListItem) => {
-    // Lógica para ver detalle (ej: router.push(`/equipos/${equipo.id_equipo}`) o abrir modal)
     console.log("Ver detalle del equipo:", equipo);
   };
 
@@ -46,7 +86,7 @@ const EquiposPage = () => {
       await toggleStatus(selectedEquipoForStatus.id_equipo);
       setSelectedEquipoForStatus(null);
     } catch {
-      // Manejado desde toast
+      // Manejado en el hook/toast
     }
   };
 
@@ -93,6 +133,25 @@ const EquiposPage = () => {
         </>
       )}
 
+      {/* Modal de Crear / Editar Equipo */}
+      <EquipoModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        equipoEditar={equipoToEdit}
+        clientesOptions={clientes}
+        sucursalesOptions={sucursales}
+        areasOptions={areas}
+        trabajadoresOptions={trabajadores}
+        setSelectedClienteId={setSelectedClienteId}
+        setSelectedSucursalId={setSelectedSucursalId}
+        setSelectedAreaId={setSelectedAreaId}
+        loadingCatalogos={loadingCatalogos}
+        onCreate={handleCreateEquipo}
+        onUpdate={handleUpdateEquipo}
+        isSubmitting={isMutating}
+      />
+
+      {/* Modal de confirmación para Activar / Desactivar */}
       <AlertDialog
         open={!!selectedEquipoForStatus}
         onOpenChange={(open: boolean) =>

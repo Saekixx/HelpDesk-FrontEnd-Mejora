@@ -1,4 +1,8 @@
-import { EquipoListItem, EquipoDetail } from "./equipo.entity";
+import {
+  EquipoListItem,
+  EquipoDetail,
+  ComponenteHardware,
+} from "./equipo.entity";
 
 // Paginación
 export interface PaginationMeta {
@@ -35,4 +39,10 @@ export interface EquipoDetailApiResponse {
 export interface EquipoActionApiResponse {
   message: string;
   data?: EquipoListItem;
+}
+
+// Respuesta al agregar o reemplazar componente de hardware
+export interface HardwareComponentApiResponse {
+  message: string;
+  data: ComponenteHardware;
 }

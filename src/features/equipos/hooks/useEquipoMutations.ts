@@ -5,8 +5,15 @@ import {
   createEquipoService,
   updateEquipoService,
   toggleEquipoStatusService,
+  addHardwareComponentService,
+  replaceHardwareComponentService,
 } from "../services/equipos.service";
-import { CreateEquipoDto, UpdateEquipoDto } from "../types/equipo.dtos";
+import {
+  CreateEquipoDto,
+  UpdateEquipoDto,
+  AddHardwareComponentDto,
+  ReplaceHardwareComponentDto,
+} from "../types/equipo.dtos";
 
 export const useEquipoMutations = (onSuccess?: () => void) => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -70,10 +77,52 @@ export const useEquipoMutations = (onSuccess?: () => void) => {
     }
   };
 
+  const addHardwareComponent = async (
+    equipoId: number,
+    dto: AddHardwareComponentDto,
+  ) => {
+    setLoading(true);
+    try {
+      const data = await addHardwareComponentService(equipoId, dto);
+      toast.success("Componente de hardware agregado correctamente");
+      if (onSuccess) onSuccess();
+      return data;
+    } catch (err: unknown) {
+      toast.error(
+        getErrorMessage(err, "Error al agregar el componente de hardware"),
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const replaceHardwareComponent = async (
+    equipoId: number,
+    dto: ReplaceHardwareComponentDto,
+  ) => {
+    setLoading(true);
+    try {
+      const data = await replaceHardwareComponentService(equipoId, dto);
+      toast.success("Componente de hardware reemplazado correctamente");
+      if (onSuccess) onSuccess();
+      return data;
+    } catch (err: unknown) {
+      toast.error(
+        getErrorMessage(err, "Error al reemplazar el componente de hardware"),
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     createEquipo,
     updateEquipo,
     toggleStatus,
+    addHardwareComponent,
+    replaceHardwareComponent,
     loading,
   };
 };

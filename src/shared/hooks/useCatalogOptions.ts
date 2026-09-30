@@ -7,6 +7,7 @@ import {
   getSucursalesOptions,
   getAreasOptions,
   getPlanesOptions,
+  getTrabajadoresOptions,
 } from "../services/catalog.service";
 
 export const useCatalogOptions = () => {
@@ -16,6 +17,7 @@ export const useCatalogOptions = () => {
   const [sucursales, setSucursales] = useState<SelectOption<number>[]>([]);
   const [areas, setAreas] = useState<SelectOption<number>[]>([]);
   const [planes, setPlanes] = useState<SelectOption<number>[]>([]);
+  const [trabajadores, setTrabajadores] = useState<SelectOption<number>[]>([]);
 
   // Estados para controlar las dependencias en cascada
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(
@@ -24,6 +26,7 @@ export const useCatalogOptions = () => {
   const [selectedSucursalId, setSelectedSucursalId] = useState<number | null>(
     null,
   );
+  const [selectedAreaId, setSelectedAreaId] = useState<number | null>(null);
 
   // Estados de carga
   const [loadingRoles, setLoadingRoles] = useState<boolean>(false);
@@ -31,6 +34,8 @@ export const useCatalogOptions = () => {
   const [loadingSucursales, setLoadingSucursales] = useState<boolean>(false);
   const [loadingAreas, setLoadingAreas] = useState<boolean>(false);
   const [loadingPlanes, setLoadingPlanes] = useState<boolean>(false);
+  const [loadingTrabajadores, setLoadingTrabajadores] =
+    useState<boolean>(false);
 
   // 1. Cargar catálogos independientes al montar (Roles, Clientes y Planes)
   useEffect(() => {
@@ -77,7 +82,9 @@ export const useCatalogOptions = () => {
     if (!selectedClienteId) {
       setSucursales([]);
       setAreas([]);
+      setTrabajadores([]);
       setSelectedSucursalId(null);
+      setSelectedAreaId(null);
       return;
     }
 
@@ -110,6 +117,7 @@ export const useCatalogOptions = () => {
 
     if (!selectedSucursalId) {
       setAreas([]);
+      setSelectedAreaId(null);
       return;
     }
 
@@ -136,6 +144,42 @@ export const useCatalogOptions = () => {
     };
   }, [selectedSucursalId]);
 
+  // 4. Cargar trabajadores cuando se selecciona un cliente, sucursal o área
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!selectedClienteId && !selectedSucursalId) {
+      setTrabajadores([]);
+      return;
+    }
+
+    const fetchTrabajadores = async () => {
+      setLoadingTrabajadores(true);
+      try {
+        const data = await getTrabajadoresOptions({
+          id_cliente: selectedClienteId ?? undefined,
+          id_sucursal: selectedSucursalId ?? undefined,
+          id_area: selectedAreaId ?? undefined,
+        });
+        if (isMounted) {
+          setTrabajadores(data || []);
+        }
+      } catch (error) {
+        console.error("Error al cargar trabajadores", error);
+      } finally {
+        if (isMounted) {
+          setLoadingTrabajadores(false);
+        }
+      }
+    };
+
+    fetchTrabajadores();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedClienteId, selectedSucursalId, selectedAreaId]);
+
   // Memorizamos el objeto loading para evitar renderizados innecesarios en el formulario
   const loading = useMemo(
     () => ({
@@ -144,6 +188,7 @@ export const useCatalogOptions = () => {
       sucursales: loadingSucursales,
       areas: loadingAreas,
       planes: loadingPlanes,
+      trabajadores: loadingTrabajadores,
     }),
     [
       loadingRoles,
@@ -151,6 +196,7 @@ export const useCatalogOptions = () => {
       loadingSucursales,
       loadingAreas,
       loadingPlanes,
+      loadingTrabajadores,
     ],
   );
 
@@ -161,10 +207,12 @@ export const useCatalogOptions = () => {
     sucursales,
     areas,
     planes,
+    trabajadores,
 
     // Métodos para cambiar la dependencia
     setSelectedClienteId,
     setSelectedSucursalId,
+    setSelectedAreaId,
 
     // Estados de carga
     loading,
