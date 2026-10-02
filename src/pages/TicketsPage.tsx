@@ -31,11 +31,9 @@ export const TicketsPage = () => {
     });
 
   const {
-    trabajadores,
+    soportes,
+    getSoportesOptions,
     loading: loadingCatalogos,
-    setSelectedClienteId,
-    setSelectedSucursalId,
-    setSelectedAreaId,
   } = useCatalogOptions();
 
   // Estado para modal de creación de ticket
@@ -52,13 +50,12 @@ export const TicketsPage = () => {
     action: "reopen" | "close" | "start-chat";
   } | null>(null);
 
-  // Abrir modal de asignación de soporte filtrando catálogos por contexto del ticket
-  const handleOpenAssignModal = (ticket: TicketEntity) => {
-    setSelectedClienteId(ticket.cliente?.id ?? null);
-    setSelectedSucursalId(ticket.sucursal?.id ?? null);
-    setSelectedAreaId(ticket.area?.id ?? null);
-
+  // Abrir modal de asignación consultando únicamente por el rol de SOPORTE_TECNICO
+  const handleOpenAssignModal = async (ticket: TicketEntity) => {
     setTicketToAssign(ticket);
+
+    // Se consulta únicamente la lista global de Soporte Técnico
+    await getSoportesOptions();
   };
 
   // Confirmar asignación de soporte
@@ -164,8 +161,8 @@ export const TicketsPage = () => {
         isOpen={!!ticketToAssign}
         onClose={() => setTicketToAssign(null)}
         ticket={ticketToAssign}
-        trabajadoresOptions={trabajadores}
-        loadingTrabajadores={loadingCatalogos.trabajadores}
+        trabajadoresOptions={soportes}
+        loadingTrabajadores={loadingCatalogos.soportes}
         onAssign={handleConfirmAssign}
         isSubmitting={isSubmitting}
       />

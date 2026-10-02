@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { SelectOption } from "../types/select-option.types";
 import {
   getRolesOptions,
@@ -8,6 +8,7 @@ import {
   getAreasOptions,
   getPlanesOptions,
   getTrabajadoresOptions,
+  GetTrabajadoresOptionsParams,
 } from "../services/catalog.service";
 
 export const useCatalogOptions = () => {
@@ -18,6 +19,7 @@ export const useCatalogOptions = () => {
   const [areas, setAreas] = useState<SelectOption<number>[]>([]);
   const [planes, setPlanes] = useState<SelectOption<number>[]>([]);
   const [trabajadores, setTrabajadores] = useState<SelectOption<number>[]>([]);
+  const [soportes, setSoportes] = useState<SelectOption<number>[]>([]);
 
   // Estados para controlar las dependencias en cascada
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(
@@ -36,6 +38,7 @@ export const useCatalogOptions = () => {
   const [loadingPlanes, setLoadingPlanes] = useState<boolean>(false);
   const [loadingTrabajadores, setLoadingTrabajadores] =
     useState<boolean>(false);
+  const [loadingSoportes, setLoadingSoportes] = useState<boolean>(false);
 
   // 1. Cargar catálogos independientes al montar (Roles, Clientes y Planes)
   useEffect(() => {
@@ -144,7 +147,7 @@ export const useCatalogOptions = () => {
     };
   }, [selectedSucursalId]);
 
-  // 4. Cargar trabajadores cuando se selecciona un cliente, sucursal o área
+  // 4. Cargar trabajadores generales cuando se selecciona un cliente, sucursal o área
   useEffect(() => {
     let isMounted = true;
 
@@ -180,7 +183,28 @@ export const useCatalogOptions = () => {
     };
   }, [selectedClienteId, selectedSucursalId, selectedAreaId]);
 
-  // Memorizamos el objeto loading para evitar renderizados innecesarios en el formulario
+  // 5. Función para consultar explícitamente usuarios con rol de Soporte Técnico
+  const getSoportesOptions = useCallback(
+    async (extraParams?: GetTrabajadoresOptionsParams) => {
+      setLoadingSoportes(true);
+      try {
+        const data = await getTrabajadoresOptions({
+          ...extraParams,
+          rol: "SOPORTE_TECNICO",
+        });
+        setSoportes(data || []);
+        return data || [];
+      } catch (error) {
+        console.error("Error al cargar usuarios de soporte técnico", error);
+        return [];
+      } finally {
+        setLoadingSoportes(false);
+      }
+    },
+    [],
+  );
+
+  // Memorizamos el objeto loading para evitar renderizados innecesarios
   const loading = useMemo(
     () => ({
       roles: loadingRoles,
@@ -189,6 +213,7 @@ export const useCatalogOptions = () => {
       areas: loadingAreas,
       planes: loadingPlanes,
       trabajadores: loadingTrabajadores,
+      soportes: loadingSoportes,
     }),
     [
       loadingRoles,
@@ -197,6 +222,7 @@ export const useCatalogOptions = () => {
       loadingAreas,
       loadingPlanes,
       loadingTrabajadores,
+      loadingSoportes,
     ],
   );
 
@@ -208,8 +234,10 @@ export const useCatalogOptions = () => {
     areas,
     planes,
     trabajadores,
+    soportes,
 
-    // Métodos para cambiar la dependencia
+    // Métodos para cargar u obtener datos específicos
+    getSoportesOptions,
     setSelectedClienteId,
     setSelectedSucursalId,
     setSelectedAreaId,
