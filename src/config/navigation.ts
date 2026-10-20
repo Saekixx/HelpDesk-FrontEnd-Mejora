@@ -106,12 +106,12 @@ export const NAVIGATION_MENU: NavItem[] = [
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",
-      "CLIENTE_TRABAJADOR"
+      "CLIENTE_TRABAJADOR",
     ],
   },
   {
     title: "Cronograma de Citas",
-    path: "/citas",
+    path: "/cronograma-citas",
     icon: CalendarDays,
     roles: [
       "ADMINISTRADOR",

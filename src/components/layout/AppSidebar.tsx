@@ -18,7 +18,7 @@ export const AppSidebar = () => {
   const { user, logout } = useAuth();
   const { state } = useSidebar();
   const navigate = useNavigate();
-
+  
   const isExpanded = state === "expanded";
 
   // Obtenemos el prefijo de ruta correspondiente al rol del usuario actual
@@ -101,7 +101,7 @@ export const AppSidebar = () => {
       {/* User Footer */}
       <SidebarFooter className="p-3 border-t border-slate-800/50 space-y-1.5 shrink-0">
         <button
-          onClick={() => navigate("/perfil")}
+          onClick={() => navigate(`${userRolePrefix}/perfil`)}
           className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-slate-800/50 transition-colors group"
         >
           <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-xs font-bold text-white shrink-0 group-hover:border-[#ff5722]">
