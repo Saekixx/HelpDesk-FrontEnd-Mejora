@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NAVIGATION_MENU } from "@/config/navigation";
 import { useAuth } from "@/context/useAuth";
+import { ROLE_BASE_PATH } from "@/types/roles";
 
 export const AppSidebar = () => {
   const { user, logout } = useAuth();
@@ -20,6 +21,10 @@ export const AppSidebar = () => {
 
   const isExpanded = state === "expanded";
 
+  // Obtenemos el prefijo de ruta correspondiente al rol del usuario actual
+  const userRolePrefix = user?.role ? ROLE_BASE_PATH[user.role as keyof typeof ROLE_BASE_PATH] || "" : "";
+
+  // Filtramos los menús que le corresponden al rol actual
   const filteredNav = NAVIGATION_MENU.filter((item) =>
     user?.role ? item.roles.includes(user.role) : false,
   );
@@ -27,6 +32,12 @@ export const AppSidebar = () => {
   const initials =
     `${user?.nombre?.[0] || ""}${user?.apellido?.[0] || ""}`.toUpperCase() ||
     "DS";
+
+  // Formateamos el rol para mostrarlo de manera más legible en el footer del sidebar
+  const formattedRole = user?.role 
+  ? ((user.role as string) === "SOPORTE_TECNICO" ? "SOPORTE_REMOTO" : user.role).replace(/_/g, " ") 
+  : "";
+  
 
   return (
     <Sidebar
@@ -53,32 +64,37 @@ export const AppSidebar = () => {
       {/* Nav Menu */}
       <SidebarContent className="py-3 px-2">
         <SidebarMenu className="space-y-1">
-          {filteredNav.map((item) => (
-            <SidebarMenuItem key={item.path}>
-              <NavLink to={item.path} className="w-full">
-                {({ isActive }) => (
-                  <SidebarMenuButton
-                    tooltip={item.title}
-                    className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors w-full ${
-                      isActive
-                        ? "bg-slate-800/90 text-white font-semibold"
-                        : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/40"
-                    }`}
-                  >
-                    {isActive && (
-                      <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#ff5722] rounded-r-full" />
-                    )}
-                    <item.icon
-                      className={`h-4 w-4 shrink-0 ${isActive ? "text-white" : "text-slate-400"}`}
-                    />
-                    {isExpanded && (
-                      <span className="truncate text-xs">{item.title}</span>
-                    )}
-                  </SidebarMenuButton>
-                )}
-              </NavLink>
-            </SidebarMenuItem>
-          ))}
+          {filteredNav.map((item) => {
+            // Construimos la ruta completa combinando el prefijo del rol con el path del menú (ej. "/admin" + "/dashboard" = "/admin/dashboard")
+            const fullPath = `${userRolePrefix}${item.path}`;
+
+            return (
+              <SidebarMenuItem key={item.path}>
+                <NavLink to={fullPath} className="w-full">
+                  {({ isActive }) => (
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors w-full ${
+                        isActive
+                          ? "bg-slate-800/90 text-white font-semibold"
+                          : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/40"
+                      }`}
+                    >
+                      {isActive && (
+                        <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#ff5722] rounded-r-full" />
+                      )}
+                      <item.icon
+                        className={`h-4 w-4 shrink-0 ${isActive ? "text-white" : "text-slate-400"}`}
+                      />
+                      {isExpanded && (
+                        <span className="truncate text-xs">{item.title}</span>
+                      )}
+                    </SidebarMenuButton>
+                  )}
+                </NavLink>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarContent>
 
@@ -97,7 +113,7 @@ export const AppSidebar = () => {
                 {user?.nombre || "Daniel"} {user?.apellido || "Singer"}
               </p>
               <p className="text-[10px] text-slate-400 font-medium tracking-wide uppercase truncate">
-                {user?.role || "ADMINISTRADOR"}
+                {formattedRole || "ADMINISTRADOR"}
               </p>
             </div>
           )}

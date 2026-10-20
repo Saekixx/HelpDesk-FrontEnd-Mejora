@@ -1,21 +1,24 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { ROLE_BASE_PATH } from "@/types/roles";
 
-import LoginPage from "@/pages/LoginPage";
-import DashboardPage from "@/pages/DashboardPage";
-import TicketsPage from "@/pages/TicketsPage";
-import ClientsPage from "@/pages/ClientsPage";
-import UnauthorizedPage from "@/pages/UnauthorizedPage";
-import UsersPage from "@/pages/UsersPage";
-import ProfilePage from "@/pages/ProfilePage";
-import PlanesPages from "@/pages/PlanesPages";
-import { ConfirmRegisterPage } from "@/pages/ConfirmRegisterPage";
-import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
-import ResetPasswordPage from "@/pages/ResetPasswordPage";
-import SucursalPage from "@/pages/SucursalPage";
-import AreaPage from "@/pages/AreaPage";
-import EquiposPage from "@/pages/EquiposPage";
+// Pages de Auth
+import LoginPage from "@/modules/auth/pages/LoginPage";
+import ConfirmRegisterPage from "@/modules/auth/pages/ConfirmRegisterPage";
+import ResetPasswordPage from "@/modules/auth/pages/ResetPasswordPage";
+import ForgotPasswordPage from "@/modules/auth/pages/ForgotPasswordPage";
+import UnauthorizedPage from "@/modules/auth/pages/UnauthorizedPage";
+
+// Pages de Administrador
+import { AdminRoutes } from "@/modules/administrador/admin.routes";
+import TrabajadorRoutes from "@/modules/cliente_trabajador/trabajador.routes";
+import SucursalRoutes from "@/modules/cliente_sucursal/sucursal.routes";
+import EmpresaRoutes from "@/modules/cliente_empresa/empresa.routes";
+import RemotoRoutes from "@/modules/soporte_remoto/remoto.routes";
+import InsituRoutes from "@/modules/soporte_insitu/insitu.routes";
+
+
 
 export const AppRouter = () => {
   return (
@@ -29,22 +32,15 @@ export const AppRouter = () => {
       {/* Rutas protegidas dentro del Layout */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/perfil" element={<ProfilePage />} />
-          <Route path="/usuarios" element={<UsersPage />} />
-          <Route path="/clientes" element={<ClientsPage />} />
-          <Route path="/tickets" element={<TicketsPage />} />
+          <Route path={`${ROLE_BASE_PATH.ADMINISTRADOR}/*`} element={<AdminRoutes />} />
 
-          {/* Vistas secundarias */}
-          <Route path="/equipos" element={<EquiposPage />} />
-          <Route path="/citas" element={<div>Página Citas</div>} />
-          <Route path="/areas" element={<AreaPage />} />
-          <Route path="/sucursales" element={<SucursalPage />} />
-          <Route path="/hardware" element={<div>Página Hardware</div>} />
-          <Route path="/software" element={<div>Página Software</div>} />
-          <Route path="/planes" element={<PlanesPages />} />
+          <Route path={`${ROLE_BASE_PATH.SOPORTE_TECNICO}/*`} element={<RemotoRoutes />} />
+          <Route path={`${ROLE_BASE_PATH.SOPORTE_INSITU}/*`} element={<InsituRoutes />} />
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path={`${ROLE_BASE_PATH.CLIENTE_EMPRESA}/*`} element={<EmpresaRoutes />} />
+          <Route path={`${ROLE_BASE_PATH.CLIENTE_SUCURSAL}/*`} element={<SucursalRoutes />} />
+          <Route path={`${ROLE_BASE_PATH.CLIENTE_TRABAJADOR}/*`} element={<TrabajadorRoutes />} />
+          
         </Route>
       </Route>
 

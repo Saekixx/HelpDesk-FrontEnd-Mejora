@@ -156,6 +156,7 @@ export const useCatalogOptions = () => {
       return;
     }
 
+    // Función para consultar trabajadores según los filtros seleccionados
     const fetchTrabajadores = async () => {
       setLoadingTrabajadores(true);
       try {

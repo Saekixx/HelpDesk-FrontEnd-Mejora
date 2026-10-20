@@ -2,9 +2,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
 import type { User } from "../types/auth";
-import { ROLE_PERMISSIONS } from "../config/rolePermissions";
 import type { Role } from "../config/rolePermissions";
-import type { Permission } from "../config/permissions";
 import { useNavigate } from "react-router-dom";
 
 // Componente proveedor de autenticación
@@ -26,12 +24,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user: { nombre: string; apellido: string; correo: string; role: string };
   }) => {
     const userRole = data.user.role as Role;
-    const permissions = ROLE_PERMISSIONS[userRole] || [];
 
     const userWithPermissions: User = {
       ...data.user,
       role: userRole,
-      permissions,
     };
 
     setToken(data.token);
@@ -50,14 +46,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     navigate("/login", { replace: true });
   };
 
-  // Función para verificar si el usuario tiene un permiso específico
-  const can = (permission: Permission): boolean => {
-    return user?.permissions.includes(permission) ?? false;
-  };
-
   // Renderiza el proveedor de contexto con los valores de autenticación
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, can }}>
+    <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

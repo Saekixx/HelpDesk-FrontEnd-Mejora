@@ -14,6 +14,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 
+// Interfaz para los elementos de navegación
 export interface NavItem {
   title: string;
   path: string;
@@ -21,10 +22,11 @@ export interface NavItem {
   roles: string[];
 }
 
+// Definición del menú de navegación con rutas y roles permitidos
 export const NAVIGATION_MENU: NavItem[] = [
   {
     title: "Dashboard",
-    path: "/dashboard",
+    path: "/dashboard", // Nota: Esto se ajustará de manera dinámica o por rol abajo
     icon: LayoutGrid,
     roles: [
       "ADMINISTRADOR",
@@ -38,7 +40,13 @@ export const NAVIGATION_MENU: NavItem[] = [
     title: "Usuarios",
     path: "/usuarios",
     icon: User,
-    roles: ["ADMINISTRADOR"],
+    roles: [
+      "ADMINISTRADOR",
+      "SOPORTE_REMOTO",
+      "SOPORTE_INSITU",
+      "CLIENTE_EMPRESA",
+      "CLIENTE_SUCURSAL",
+    ],
   },
   {
     title: "Clientes",
@@ -98,6 +106,7 @@ export const NAVIGATION_MENU: NavItem[] = [
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",
+      "CLIENTE_TRABAJADOR"
     ],
   },
   {
