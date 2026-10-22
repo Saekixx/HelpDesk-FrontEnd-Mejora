@@ -7,7 +7,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { RequerimientoDia } from "../types/VolumenRequqerimientos";
+import { RequerimientoDia } from "../../types/dashboard/VolumenRequqerimientos";
 import { Card } from "@/components/ui/card";
 
 interface VolumenRequerimientosCardProps {

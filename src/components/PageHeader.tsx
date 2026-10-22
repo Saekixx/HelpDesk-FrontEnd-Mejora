@@ -1,12 +1,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-// Definimos las propiedades que recibirá el componente PageHeader
 interface PageHeaderProps {
-  category?: string; 
-  title: string; 
-  description?: string; 
-  actions?: React.ReactNode; 
+  category?: string;
+  title: React.ReactNode; // Permite tanto texto string como elementos JSX (badges, contadores, etc.)
+  description?: string;
+  actions?: React.ReactNode;
   className?: string;
 }
 
@@ -20,7 +19,7 @@ export const PageHeader = ({
   return (
     <div
       className={cn(
-        "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 mb-6 border-b border-slate-200/80",
+        "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 mb-2",
         className,
       )}
     >
@@ -28,23 +27,27 @@ export const PageHeader = ({
       <div className="space-y-1">
         {category && (
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-orange-500/80" />
-            <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#ff5722]" />
+            <span className="text-[11px] font-extrabold text-slate-400 tracking-wider uppercase">
               {category}
             </span>
           </div>
         )}
-        <h1 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+
+        <div className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
           {title}
-        </h1>
+        </div>
+
         {description && (
-          <p className="text-sm text-slate-500 font-medium">{description}</p>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            {description}
+          </p>
         )}
       </div>
 
-      {/* Sección derecha: Botones de acción */}
+      {/* Sección derecha: Botones de Acción */}
       {actions && (
-        <div className="flex items-center gap-3 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
           {actions}
         </div>
       )}

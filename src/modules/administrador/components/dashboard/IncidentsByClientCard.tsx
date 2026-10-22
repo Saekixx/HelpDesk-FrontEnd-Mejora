@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { BarChart3 } from "lucide-react";
-import { IncidenteCliente } from "../types/IncidenteCliente";
+import { IncidenteCliente } from "../../types/dashboard/IncidenteCliente";
 import { Card } from "@/components/ui/card";
 
 interface IncidentsByClientCardProps {

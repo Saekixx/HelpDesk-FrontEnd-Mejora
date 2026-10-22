@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Calendar, User } from "lucide-react";
-import { CitaProgramada } from "../types/CitasProgramadas";
+import { CitaProgramada } from "../../types/dashboard/CitasProgramadas";
 import { Card } from "@/components/ui/card";
 
 interface CitasHoyCardProps {

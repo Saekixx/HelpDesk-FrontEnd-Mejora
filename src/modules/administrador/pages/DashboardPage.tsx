@@ -9,8 +9,8 @@ import {
   Laptop,
   Ticket,
 } from "lucide-react";
-import { IncidentsByClientCard } from "../components/IncidentsByClientCard";
-import { CitasHoyCard } from "../components/CitasHoyCard";
+import { IncidentsByClientCard } from "../components/dashboard/IncidentsByClientCard";
+import { CitasHoyCard } from "../components/dashboard/CitasHoyCard";
 import {
   mockAlertasLicenciasData,
   mockCitasHoyData,
@@ -18,8 +18,8 @@ import {
   mockVolumenRequerimientosData,
 } from "../data/dashboardData";
 import { useNavigate } from "react-router-dom";
-import { VolumenRequerimientosCard } from "../components/VolumenRequerimientosCard";
-import { AlertasLicenciasCard } from "../components/AlertasLicenciasCard";
+import { VolumenRequerimientosCard } from "../components/dashboard/VolumenRequerimientosCard";
+import { AlertasLicenciasCard } from "../components/dashboard/AlertasLicenciasCard";
 
 function DashboardPage() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
-import { ResumenAlertasLicencias } from "../types/AlertaLicencia";
-import { ResumenCitasHoy } from "../types/CitasProgramadas";
-import { ResumenIncidenciasCliente } from "../types/IncidenteCliente";
-import { ResumenVolumenRequerimientos } from "../types/VolumenRequqerimientos";
+import { ResumenAlertasLicencias } from "../types/dashboard/AlertaLicencia";
+import { ResumenCitasHoy } from "../types/dashboard/CitasProgramadas";
+import { ResumenIncidenciasCliente } from "../types/dashboard/IncidenteCliente";
+import { ResumenVolumenRequerimientos } from "../types/dashboard/VolumenRequqerimientos";
 
 // src/data/dashboardData.ts
 export const mockIncidenciasClienteData: ResumenIncidenciasCliente = {

@@ -1,8 +1,10 @@
 import { cn } from "@/lib/utils";
 import { AlertTriangle, Laptop, Building2 } from "lucide-react";
-import { AlertaLicencia, SeveridadLicencia } from "../types/AlertaLicencia";
+import {
+  AlertaLicencia,
+  SeveridadLicencia,
+} from "../../types/dashboard/AlertaLicencia";
 import { Card } from "@/components/ui/card";
-
 
 interface AlertasLicenciasCardProps {
   title?: string;
@@ -46,7 +48,7 @@ export const AlertasLicenciasCard = ({
     <Card
       className={cn(
         "bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between",
-        className
+        className,
       )}
     >
       <div>
@@ -79,7 +81,7 @@ export const AlertasLicenciasCard = ({
                 key={alerta.id}
                 className={cn(
                   "border rounded-xl p-4 space-y-2.5 transition-colors",
-                  styles.container
+                  styles.container,
                 )}
               >
                 {/* Fila Superior: Nombre del Software y Días Restantes */}
@@ -104,7 +106,7 @@ export const AlertasLicenciasCard = ({
                   <span
                     className={cn(
                       "px-2 py-1 rounded-md text-[10px] uppercase tracking-wider border shrink-0",
-                      styles.badge
+                      styles.badge,
                     )}
                   >
                     Vence en {alerta.dias_restantes} días
