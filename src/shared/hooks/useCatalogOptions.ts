@@ -9,6 +9,7 @@ import {
   getPlanesOptions,
   getTrabajadoresOptions,
   GetTrabajadoresOptionsParams,
+  getZonasOptions,
 } from "../services/catalog.service";
 
 export const useCatalogOptions = () => {
@@ -20,6 +21,7 @@ export const useCatalogOptions = () => {
   const [planes, setPlanes] = useState<SelectOption<number>[]>([]);
   const [trabajadores, setTrabajadores] = useState<SelectOption<number>[]>([]);
   const [soportes, setSoportes] = useState<SelectOption<number>[]>([]);
+  const [zonas, setZonas] = useState<SelectOption<number>[]>([]);
 
   // Estados para controlar las dependencias en cascada
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(
@@ -39,6 +41,7 @@ export const useCatalogOptions = () => {
   const [loadingTrabajadores, setLoadingTrabajadores] =
     useState<boolean>(false);
   const [loadingSoportes, setLoadingSoportes] = useState<boolean>(false);
+  const [loadingZonas, setLoadingZonas] = useState<boolean>(false);
 
   // 1. Cargar catálogos independientes al montar (Roles, Clientes y Planes)
   useEffect(() => {
@@ -205,6 +208,32 @@ export const useCatalogOptions = () => {
     [],
   );
 
+  // 5. Cargar zonas
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchZonas = async () => {
+      setLoadingZonas(true);
+      try {
+        const data = await getZonasOptions();
+        if (isMounted) {
+          setZonas(data || []);
+        }
+      } catch (error) {
+        console.error("Error al cargar zonas", error);
+      } finally {
+        if (isMounted) {
+          setLoadingZonas(false);
+        }
+      }
+    };
+
+    fetchZonas();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Memorizamos el objeto loading para evitar renderizados innecesarios
   const loading = useMemo(
     () => ({
@@ -215,6 +244,7 @@ export const useCatalogOptions = () => {
       planes: loadingPlanes,
       trabajadores: loadingTrabajadores,
       soportes: loadingSoportes,
+      zonas: loadingZonas,
     }),
     [
       loadingRoles,
@@ -224,6 +254,7 @@ export const useCatalogOptions = () => {
       loadingPlanes,
       loadingTrabajadores,
       loadingSoportes,
+      loadingZonas,
     ],
   );
 
@@ -236,6 +267,7 @@ export const useCatalogOptions = () => {
     planes,
     trabajadores,
     soportes,
+    zonas,
 
     // Métodos para cargar u obtener datos específicos
     getSoportesOptions,

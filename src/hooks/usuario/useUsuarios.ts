@@ -55,11 +55,15 @@ export const useUsuarios = () => {
       const response = await getUsuarios(queryParams);
 
       if (response && response.data) {
-        setUsuarios(response.data.data || []);
+        // Extraemos los datos y el objeto meta anidado del backend
+        const payloadData = response.data.data;
+        const payloadMeta = response.data.meta;
+
+        setUsuarios(Array.isArray(payloadData) ? payloadData : []);
         setMeta({
-          total: response.data.total,
-          page: response.data.page,
-          lastPage: response.data.totalPages,
+          total: payloadMeta?.total || 0,
+          page: payloadMeta?.page || 1,
+          lastPage: payloadMeta?.totalPages || 1,
         });
       }
     } catch (err: any) {

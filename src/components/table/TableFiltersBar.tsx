@@ -17,6 +17,11 @@ interface TableFiltersBarProps {
   dropdowns?: FilterDropdownConfig[];
   initialValues?: Record<string, any>;
   onApplyFilters: (filters: Record<string, any>) => void;
+  onFilterChange?: (
+    key: string,
+    value: any,
+    allFilters: Record<string, any>,
+  ) => void; // <--- NUEVO: Prop para cascada en tiempo real
   onResetFilters?: () => void;
   multiRow?: boolean;
 }
@@ -26,6 +31,7 @@ export const TableFiltersBar = ({
   dropdowns = [],
   initialValues = {},
   onApplyFilters,
+  onFilterChange,
   onResetFilters,
   multiRow = false,
 }: TableFiltersBarProps) => {
@@ -37,7 +43,13 @@ export const TableFiltersBar = ({
   }, [initialValues]);
 
   const handleInputChange = (key: string, value: any) => {
-    setFilterValues((prev) => ({ ...prev, [key]: value }));
+    const updated = { ...filterValues, [key]: value };
+    setFilterValues(updated);
+
+    // Si la prop está activa, notificamos el cambio al instante (ideal para cascada)
+    if (onFilterChange) {
+      onFilterChange(key, value, updated);
+    }
   };
 
   const handleApply = () => {
@@ -49,7 +61,6 @@ export const TableFiltersBar = ({
     if (onResetFilters) onResetFilters();
   };
 
-  // Extraer dinámicamente el valor de la opción
   const getOptValue = (opt: FilterOption, dropdown: FilterDropdownConfig) => {
     if (dropdown.valueKey) return opt[dropdown.valueKey];
     if (opt.value !== undefined) return opt.value;
@@ -57,7 +68,6 @@ export const TableFiltersBar = ({
     return "";
   };
 
-  // Extraer dinámicamente la etiqueta/texto de la opción
   const getOptLabel = (opt: FilterOption, dropdown: FilterDropdownConfig) => {
     if (dropdown.labelKey) return opt[dropdown.labelKey];
     if (opt.label !== undefined) return opt.label;
@@ -65,7 +75,6 @@ export const TableFiltersBar = ({
     return String(getOptValue(opt, dropdown));
   };
 
-  // Extrae el prefijo (Ej: "Estado", "Rol") desde el label o el placeholder
   const getFilterPrefix = (dropdown: FilterDropdownConfig) => {
     if (dropdown.label) return dropdown.label;
     if (dropdown.placeholder.includes(":")) {
@@ -76,7 +85,6 @@ export const TableFiltersBar = ({
       .trim();
   };
 
-  // Renderiza el valor seleccionado manteniendo siempre el mismo color oscuro y nítido
   const renderSelectValue = (dropdown: FilterDropdownConfig) => {
     const currentValue = filterValues[dropdown.key];
     const prefix = getFilterPrefix(dropdown);
@@ -136,7 +144,7 @@ export const TableFiltersBar = ({
                 value={String(filterValues[dropdown.key] ?? "all")}
                 onValueChange={(val) => handleInputChange(dropdown.key, val)}
               >
-                <SelectTrigger className="w-[190px] bg-slate-50/50 border-slate-200 rounded-xl text-xs h-10 px-3">
+                <SelectTrigger className="w-auto min-w-[150px] bg-slate-50/50 border-slate-200 rounded-xl text-xs h-10 px-3">
                   <SelectValue>{renderSelectValue(dropdown)}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -187,7 +195,7 @@ export const TableFiltersBar = ({
         </div>
       </div>
 
-      {/* Segunda Fila (para MultiRow en Inventarios/Equipos) */}
+      {/* Segunda Fila (para MultiRow) */}
       {multiRow && dropdowns.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 pt-1">
           {dropdowns.map((dropdown) => (

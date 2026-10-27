@@ -92,3 +92,18 @@ export const getTrabajadoresOptions = async (
     label: user.nombre,
   }));
 };
+
+export const getZonasOptions = async (): Promise<SelectOption<number>[]> => {
+  const response = await api.get<{
+    data: { id_zona: number; nombre_zona: string }[];
+  }>("/zona/options");
+
+  const zonesArray = response.data.data;
+
+  return zonesArray.map((zone) => ({
+    value: zone.id_zona,
+    label: zone.nombre_zona,
+    id: zone.id_zona,
+    nombre: zone.nombre_zona,
+  }));
+};

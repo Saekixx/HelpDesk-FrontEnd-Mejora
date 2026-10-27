@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { TableFiltersBar } from "@/components/table/TableFiltersBar";
-import { useUsuarios } from "../../../shared/hooks/usuario/useUsuarios";
 import { DataTableContainer } from "@/components/table/DataTableContainer";
 import { TablePaginationBar } from "@/components/table/TablePaginationBar";
 import { getUsuariosColumns } from "../components/usuario/UsuariosColumns";
@@ -11,9 +10,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { UsuarioItem } from "@/types/usuario/usuario.types";
 import { UsuarioModal } from "@/components/usuario/UsuarioModal";
-import { toggleUsuarioStatus } from "@/services/usuarios/usuario.service"; // <--- Importar el servicio
+import { toggleUsuarioStatus } from "@/services/usuarios/usuario.service";
 import { toast } from "sonner";
 import { ConfirmStatusModal } from "@/components/ConfirmStatusModal";
+import { useUsuarios } from "@/hooks/usuario/useUsuarios";
 
 function UsuariosPage() {
   const {
@@ -36,6 +36,7 @@ function UsuariosPage() {
     clientes,
     sucursales,
     areas,
+    zonas,
     setSelectedClienteId,
     setSelectedSucursalId,
   } = useCatalogOptions();
@@ -43,7 +44,9 @@ function UsuariosPage() {
   // Estados para modales de Crear y Editar
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [usuarioToEdit, setUsuarioToEdit] = useState<UsuarioItem | null>(null);
+  const [usuarioToEdit, setUsuarioToEdit] = useState<
+    (UsuarioItem & { zonas_ids?: number[] }) | null
+  >(null);
 
   // Estados para el modal de cambio de estado (Activar / Desactivar)
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
@@ -60,12 +63,29 @@ function UsuariosPage() {
     setSelectedSucursalId(sucursalId ? Number(sucursalId) : null);
   };
 
-  const handleOpenEdit = (usuarioItem: UsuarioItem) => {
-    setUsuarioToEdit(usuarioItem);
+  const handleOpenEdit = (
+    usuarioItem: UsuarioItem & { zonas_ids?: number[] },
+  ) => {
+    // Extraemos los IDs de las zonas de forma limpia y robusta desde el array de objetos
+    const zonasIds =
+      usuarioItem.zonas_ids && usuarioItem.zonas_ids.length > 0
+        ? usuarioItem.zonas_ids
+        : usuarioItem.zonas && Array.isArray(usuarioItem.zonas)
+          ? usuarioItem.zonas.map((z: any) =>
+              Number(z.id_zona ?? z.id ?? z.value),
+            )
+          : [];
+
+    setUsuarioToEdit({
+      ...usuarioItem,
+      zonas_ids: zonasIds,
+    });
+
     if (usuarioItem.id_cliente)
       setSelectedClienteId(Number(usuarioItem.id_cliente));
     if (usuarioItem.id_sucursal)
       setSelectedSucursalId(Number(usuarioItem.id_sucursal));
+
     setIsEditModalOpen(true);
   };
 
@@ -195,7 +215,7 @@ function UsuariosPage() {
         onResetFilters={resetQuery}
       />
 
-      {/* 4. TABLA (Pasamos el callback onToggleStatus) */}
+      {/* 4. TABLA */}
       <DataTableContainer
         data={usuarios}
         columns={getUsuariosColumns({
@@ -222,7 +242,7 @@ function UsuariosPage() {
         clientes={clientes}
         sucursales={sucursales}
         areas={areas}
-        zonas={[]}
+        zonas={zonas}
         onClienteChange={handleClienteChange}
         onSucursalChange={handleSucursalChange}
         onSuccess={() => {
@@ -240,7 +260,7 @@ function UsuariosPage() {
         clientes={clientes}
         sucursales={sucursales}
         areas={areas}
-        zonas={[]}
+        zonas={zonas}
         onClienteChange={handleClienteChange}
         onSucursalChange={handleSucursalChange}
         onSuccess={() => {

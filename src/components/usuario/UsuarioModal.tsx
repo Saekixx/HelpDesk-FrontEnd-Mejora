@@ -63,6 +63,22 @@ export const UsuarioModal = ({
     }
   }, [usuarioToEdit]);
 
+  // Normalizamos el usuario a editar para asegurar que 'zonas_ids' tenga siempre los números de las zonas
+  const normalizedUsuarioToEdit = React.useMemo(() => {
+    if (!usuarioToEdit) return null;
+
+    // Extraemos los IDs si vienen en formato de objetos de la API
+    const extractedZonasIds =
+      usuarioToEdit.zonas && Array.isArray(usuarioToEdit.zonas)
+        ? usuarioToEdit.zonas.map((z: any) => Number(z.id_zona ?? z.id))
+        : [];
+
+    return {
+      ...usuarioToEdit,
+      zonas_ids: usuarioToEdit.zonas_ids || extractedZonasIds,
+    };
+  }, [usuarioToEdit]);
+
   const initials =
     `${formMeta.nombre?.charAt(0) || ""}${formMeta.apellido?.charAt(0) || ""}`.toUpperCase() ||
     "US";
@@ -104,9 +120,9 @@ export const UsuarioModal = ({
           </div>
         </DialogHeader>
 
-        {/* Renderizado del Formulario Aislado */}
+        {/* Renderizado del Formulario Aislado con el objeto normalizado */}
         <UsuarioForm
-          usuarioToEdit={usuarioToEdit}
+          usuarioToEdit={normalizedUsuarioToEdit}
           onSuccess={onSuccess}
           onClose={() => onOpenChange(false)}
           roles={roles}

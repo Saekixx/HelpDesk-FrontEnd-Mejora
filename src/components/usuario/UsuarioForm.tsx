@@ -35,7 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 import { UsuarioItem } from "@/types/usuario/usuario.types";
 import { UsuarioRequest } from "@/types/usuario/usuario.request.type";
-import { useUsuarioMutations } from "@/shared/hooks/usuario/useUsuarioMutations";
+import { useUsuarioMutations } from "@/hooks/usuario/useUsuarioMutations";
 import {
   UsuarioFormData,
   usuarioSchema,
@@ -108,9 +108,16 @@ export const UsuarioForm = ({
   const nombreWatch = watch("nombre");
   const apellidoWatch = watch("apellido");
 
-  // Rellenar o resetear formulario con conversión robusta a string
+  // Rellenar o resetear formulario sólo al cambiar el objeto usuarioToEdit (evitando resets por props que cambian en render)
   React.useEffect(() => {
     if (usuarioToEdit) {
+      const extractedZonas =
+        usuarioToEdit.zonas_ids && usuarioToEdit.zonas_ids.length > 0
+          ? usuarioToEdit.zonas_ids
+          : usuarioToEdit.zonas && Array.isArray(usuarioToEdit.zonas)
+            ? usuarioToEdit.zonas.map((z: any) => Number(z.id_zona ?? z.id))
+            : [];
+
       reset({
         nombre: usuarioToEdit.nombre || "",
         apellido: usuarioToEdit.apellido || "",
@@ -128,11 +135,8 @@ export const UsuarioForm = ({
             : "",
         id_area:
           usuarioToEdit.id_area != null ? String(usuarioToEdit.id_area) : "",
-        id_zona:
-          usuarioToEdit.zonas_ids?.[0] != null
-            ? String(usuarioToEdit.zonas_ids[0])
-            : "",
-        zonas_ids: usuarioToEdit.zonas_ids || [],
+        id_zona: extractedZonas[0] != null ? String(extractedZonas[0]) : "",
+        zonas_ids: extractedZonas,
       } as any);
 
       if (usuarioToEdit.id_cliente && onClienteChange) {
@@ -156,7 +160,7 @@ export const UsuarioForm = ({
       } as any);
     }
     setResetPassword(false);
-  }, [usuarioToEdit, reset, onClienteChange, onSucursalChange]);
+  }, [usuarioToEdit, reset]); // IMPORTANTE: omitimos las callbacks onClienteChange/onSucursalChange del array de dependencias para evitar que re-ejecuten reset()
 
   const selectedRolObj = roles.find(
     (r) => String(r.value) === String(selectedRolId),
@@ -307,7 +311,15 @@ export const UsuarioForm = ({
             return (
               <Select
                 value={field.value != null ? String(field.value) : ""}
-                onValueChange={field.onChange}
+                onValueChange={(val) => {
+                  field.onChange(val);
+                  // Limpiar selecciones contextuales al cambiar de rol
+                  setValue("id_cliente", "");
+                  setValue("id_sucursal", "");
+                  setValue("id_area", "");
+                  setValue("id_zona", "");
+                  setValue("zonas_ids", []);
+                }}
               >
                 <SelectTrigger className="h-10 text-xs font-semibold bg-white">
                   <SelectValue placeholder="Selecciona el rol de acceso...">
@@ -317,7 +329,7 @@ export const UsuarioForm = ({
                         : undefined)}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
                   {roles.map((rol) => (
                     <SelectItem
                       key={String(rol.value)}
@@ -406,7 +418,11 @@ export const UsuarioForm = ({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </div>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[450px] p-0" align="start">
+                    <PopoverContent
+                      className="w-[450px] p-0"
+                      align="start"
+                      onCloseAutoFocus={(e) => e.preventDefault()}
+                    >
                       <Command>
                         <CommandInput
                           placeholder="Buscar zona..."
@@ -497,7 +513,9 @@ export const UsuarioForm = ({
                               : undefined)}
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent
+                        onCloseAutoFocus={(e) => e.preventDefault()}
+                      >
                         {clientes.map((c) => (
                           <SelectItem
                             key={String(c.value)}
@@ -545,7 +563,9 @@ export const UsuarioForm = ({
                                 : undefined)}
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent
+                          onCloseAutoFocus={(e) => e.preventDefault()}
+                        >
                           {sucursales.map((s) => (
                             <SelectItem
                               key={String(s.value)}
@@ -590,7 +610,9 @@ export const UsuarioForm = ({
                                 : undefined)}
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent
+                          onCloseAutoFocus={(e) => e.preventDefault()}
+                        >
                           {zonas.map((z) => (
                             <SelectItem
                               key={String(z.value)}
@@ -634,7 +656,9 @@ export const UsuarioForm = ({
                                 : undefined)}
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent
+                          onCloseAutoFocus={(e) => e.preventDefault()}
+                        >
                           {areas.map((a) => (
                             <SelectItem
                               key={String(a.value)}

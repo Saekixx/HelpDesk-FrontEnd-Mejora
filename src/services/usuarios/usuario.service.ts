@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios";
-import { ApiResponse, PaginatedResponse } from "@/types/api.types";
+import { ApiResponse, NestedPaginatedResponse } from "@/types/api.types";
 import { GetUsuariosParams, UsuarioItem } from "@/types/usuario/usuario.types";
 import { EstadisticaUsuarios } from "@/types/usuario/estadistica.type";
 import { UsuarioRequest } from "@/types/usuario/usuario.request.type";
@@ -10,11 +10,10 @@ import { UsuarioRequest } from "@/types/usuario/usuario.request.type";
  */
 export const getUsuarios = async (
   params?: GetUsuariosParams,
-): Promise<ApiResponse<PaginatedResponse<UsuarioItem>>> => {
-  const response = await api.get<ApiResponse<PaginatedResponse<UsuarioItem>>>(
-    "/usuario",
-    { params },
-  );
+): Promise<ApiResponse<NestedPaginatedResponse<UsuarioItem>>> => {
+  const response = await api.get<
+    ApiResponse<NestedPaginatedResponse<UsuarioItem>>
+  >("/usuario", { params });
   return response.data;
 };
 
