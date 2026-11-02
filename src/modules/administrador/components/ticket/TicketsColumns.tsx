@@ -4,9 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Monitor,
   MessageSquare,
-  AlertCircle,
   Clock,
-  CheckCircle2,
   RefreshCw,
   FileText,
   UserPlus,
@@ -17,7 +15,6 @@ import {
 export interface TicketItem {
   id_ticket: string;
   codigo_ticket: string;
-  prioridad: "P1 CRÍTICO" | "P2 ALTA" | "P3 NORMAL" | "REINCIDENCIA";
   tiempo_o_fecha: string;
   solicitante: string;
   cargo_solicitante: string;
@@ -45,20 +42,6 @@ interface TicketsColumnsProps {
   onActionClick: (item: TicketItem) => void;
   onOpenChat: (item: TicketItem) => void;
 }
-
-// Estilos de Badge para Prioridad
-const getPrioridadBadgeStyle = (prioridad: string) => {
-  switch (prioridad) {
-    case "P1 CRÍTICO":
-      return "bg-red-50 text-red-700 border-red-200 font-bold";
-    case "P2 ALTA":
-      return "bg-amber-50 text-amber-700 border-amber-200 font-bold";
-    case "REINCIDENCIA":
-      return "bg-purple-50 text-purple-700 border-purple-200 font-bold";
-    default:
-      return "bg-blue-50 text-blue-700 border-blue-200 font-medium";
-  }
-};
 
 // Estilos de Badge para Estado del Ticket
 const getEstadoBadgeStyle = (estado: string) => {
@@ -94,12 +77,6 @@ export const getTicketsColumns = ({
           <span className="font-extrabold text-slate-900 text-xs">
             {item.codigo_ticket}
           </span>
-          <Badge
-            variant="outline"
-            className={`text-[10px] px-2 py-0.2 ${getPrioridadBadgeStyle(item.prioridad)}`}
-          >
-            {item.prioridad}
-          </Badge>
         </div>
         <div className="space-y-0.5">
           <span className="text-[11px] text-slate-400 font-medium block">

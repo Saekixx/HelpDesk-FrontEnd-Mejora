@@ -12,6 +12,7 @@ import EquiposPage from "./pages/EquiposPage";
 import HardwarePage from "./pages/HardwarePage";
 import SoftwarePage from "./pages/SoftwarePage";
 import TicketPage from "./pages/TicketPage";
+import TicketDetailPage from "./pages/TicketDetailPage";
 
 export const AdminRoutes = () => {
   return (
@@ -26,6 +27,7 @@ export const AdminRoutes = () => {
       <Route path="software" element={<SoftwarePage />} />
       <Route path="planes" element={<PlanesPage />} />
       <Route path="tickets" element={<TicketPage />} />
+      <Route path="/tickets/:id" element={<TicketDetailPage />} />
       <Route path="cronograma-citas" element={<CronogramaCitasPage />} />
 
       <Route path="perfil" element={<PerfilPage />} />
