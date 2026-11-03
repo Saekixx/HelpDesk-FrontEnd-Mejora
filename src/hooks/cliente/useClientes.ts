@@ -1,9 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import { getClientes } from "@/services/clientes/cliente.service";
 import {
+  getClienteDetailById,
+  getClientes,
+} from "@/services/clientes/cliente.service";
+import {
+  ClienteDetailData,
   ClienteListItem,
   GetClientesParams,
 } from "@/types/cliente/cliente.types";
+import { toast } from "sonner";
 
 export const useClientes = () => {
   // Estado para los parámetros de consulta (búsqueda, filtros, paginación)
@@ -130,5 +135,45 @@ export const useClientes = () => {
     setLimit,
     resetQuery,
     refetch: fetchClientes,
+  };
+};
+
+export const useClienteDetail = (clienteId: number | null) => {
+  const [cliente, setCliente] = useState<ClienteDetailData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchClienteDetail = useCallback(async (id: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await getClienteDetailById(id);
+      if (response && response.data) {
+        setCliente(response.data);
+      }
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        "Ocurrió un error al cargar el detalle del cliente.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (clienteId !== null && clienteId !== undefined) {
+      fetchClienteDetail(clienteId);
+    } else {
+      setCliente(null);
+    }
+  }, [clienteId, fetchClienteDetail]);
+
+  return {
+    cliente,
+    isLoading,
+    error,
+    refetch: () => clienteId && fetchClienteDetail(clienteId),
   };
 };

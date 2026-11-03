@@ -21,6 +21,7 @@ import { useAreaMutations } from "@/hooks/area/useAreaMutations";
 import { getAreasColumns } from "../components/area/AreasColumns";
 import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
 import { AreaModal } from "@/components/area/AreaModal";
+import { AreaDetailModal } from "@/components/area/AreaDetailModal";
 
 function AreasPage() {
   const {
@@ -34,6 +35,9 @@ function AreasPage() {
     setLimit,
     resetQuery,
     refetch,
+    selectedArea,
+    isLoadingDetail,
+    getDetalleArea,
   } = useAreas();
 
   // Hook para los selects del catálogo en cascada
@@ -44,7 +48,6 @@ function AreasPage() {
     number | null
   >(queryParams.id_cliente ? Number(queryParams.id_cliente) : null);
 
-  // Cada vez que cambia la empresa seleccionada en el filtro, actualizamos el hook de catálogos
   useEffect(() => {
     setSelectedClienteId(selectedEmpresaFilter);
   }, [selectedEmpresaFilter, setSelectedClienteId]);
@@ -60,16 +63,33 @@ function AreasPage() {
   const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
   const [areaToEdit, setAreaToEdit] = useState<any | null>(null);
 
+  // Estado para el Modal de Ver Detalle
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
   const handleOpenCreate = () => {
+    setSelectedClienteId(null);
     setAreaToEdit(null);
     setIsAreaModalOpen(true);
   };
 
-  const handleViewDetail = (area: AreaListItem) => {
-    toast.info(`Ver detalle de área: ${area.nombre_area}`);
+  const handleViewDetail = async (area: AreaListItem) => {
+    try {
+      setIsDetailModalOpen(true);
+      await getDetalleArea(area.id_area);
+    } catch (error) {
+      toast.error("No se pudo cargar el detalle del área.");
+      setIsDetailModalOpen(false);
+    }
   };
 
   const handleEdit = (area: AreaListItem) => {
+    const clienteId =
+      area.cliente?.id_cliente ?? (area as any).id_empresa ?? null;
+
+    if (clienteId) {
+      setSelectedClienteId(Number(clienteId));
+    }
+
     setAreaToEdit(area);
     setIsAreaModalOpen(true);
   };
@@ -81,6 +101,10 @@ function AreasPage() {
         : "Área creada correctamente",
     );
     refetch();
+  };
+
+  const handleClienteChange = (clienteId: string | number) => {
+    setSelectedClienteId(clienteId ? Number(clienteId) : null);
   };
 
   const handleOpenToggleStatus = (area: AreaListItem) => {
@@ -189,11 +213,12 @@ function AreasPage() {
         onFilterChange={(key, value) => {
           if (key === "id_cliente") {
             const clienteId = value && value !== "all" ? Number(value) : null;
-            setSelectedClienteId(clienteId);
+            setSelectedEmpresaFilter(clienteId);
           }
         }}
         onApplyFilters={updateQuery}
         onResetFilters={() => {
+          setSelectedEmpresaFilter(null);
           setSelectedClienteId(null);
           resetQuery();
         }}
@@ -225,10 +250,15 @@ function AreasPage() {
         areaToEdit={areaToEdit}
         clientes={clientes}
         sucursales={sucursales}
-        onClienteChange={(clienteId) => {
-          // Permite que el modal cargue dinámicamente las sucursales al seleccionar la empresa
-          setSelectedClienteId(clienteId);
-        }}
+        onClienteChange={handleClienteChange}
+      />
+
+      {/* MODAL DE FICHA / DETALLE DE ÁREA */}
+      <AreaDetailModal
+        isOpen={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+        areaDetail={selectedArea}
+        isLoading={isLoadingDetail}
       />
 
       <ConfirmStatusModal

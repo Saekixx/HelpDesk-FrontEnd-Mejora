@@ -5,6 +5,7 @@ import {
   GetAreasParams,
   AreaListItem,
   AreaDetail,
+  AreaDetalle,
 } from "@/types/area/area.types";
 
 /**
@@ -26,8 +27,8 @@ export const getAreas = async (
  */
 export const getAreaById = async (
   id: number,
-): Promise<ApiResponse<AreaDetail>> => {
-  const response = await api.get<ApiResponse<AreaDetail>>(`/areas/${id}`);
+): Promise<ApiResponse<AreaDetalle>> => {
+  const response = await api.get<ApiResponse<AreaDetalle>>(`/areas/${id}`);
   return response.data;
 };
 

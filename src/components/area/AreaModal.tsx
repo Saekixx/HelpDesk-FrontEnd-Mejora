@@ -17,7 +17,7 @@ interface AreaModalProps {
   areaToEdit?: any | null;
   clientes?: SelectOption[];
   sucursales?: SelectOption[];
-  onClienteChange?: (clienteId: number | null) => void;
+  onClienteChange?: (clienteId: string | number) => void;
 }
 
 export const AreaModal = ({
@@ -56,7 +56,6 @@ export const AreaModal = ({
         </DialogHeader>
 
         <AreaForm
-          key={areaToEdit ? areaToEdit.id_area : "create-area"}
           areaToEdit={areaToEdit}
           onSuccess={onSuccess}
           onClose={handleClose}

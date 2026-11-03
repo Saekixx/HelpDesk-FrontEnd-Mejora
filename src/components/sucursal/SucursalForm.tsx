@@ -11,29 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import {
   sucursalSchema,
   SucursalFormData,
 } from "@/schema/sucursal/sucursal.schema";
 import { SelectOption } from "@/shared/types/select-option.types";
-
-interface SucursalDetail {
-  id_sucursal?: number;
-  id_cliente?: number;
-  nombre?: string;
-  direccion?: string;
-  encargado_nombre?: string;
-  encargado_apellido?: string;
-  telefono?: string;
-  correo?: string;
-}
+import { useSucursalMutations } from "@/hooks/sucursal/useSucursalMutations";
+import { SucursalListItem } from "@/types/sucursal/sucursal.types";
 
 interface SucursalFormProps {
-  sucursalToEdit?: SucursalDetail | null;
+  sucursalToEdit?: SucursalListItem | any | null;
   onSuccess: () => void;
   onClose: () => void;
   clientes?: SelectOption[];
+  zonas?: SelectOption[]; // <- Prop para el catálogo de zonas
 }
 
 export const SucursalForm = ({
@@ -41,10 +33,13 @@ export const SucursalForm = ({
   onSuccess,
   onClose,
   clientes = [],
+  zonas = [],
 }: SucursalFormProps) => {
   const isEditing = Boolean(sucursalToEdit);
   const [step, setStep] = React.useState<1 | 2>(1);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const { crearSucursal, actualizarSucursal, isSubmitting } =
+    useSucursalMutations();
 
   const {
     register,
@@ -61,6 +56,7 @@ export const SucursalForm = ({
       id_cliente: undefined,
       nombre: "",
       direccion: "",
+      id_zona: undefined,
       encargado_nombre: "",
       encargado_apellido: "",
       telefono: "",
@@ -72,21 +68,38 @@ export const SucursalForm = ({
   React.useEffect(() => {
     if (sucursalToEdit) {
       reset({
-        id_cliente: sucursalToEdit.id_cliente
-          ? Number(sucursalToEdit.id_cliente)
-          : undefined,
-        nombre: sucursalToEdit.nombre || "",
+        id_cliente:
+          sucursalToEdit.cliente_empresa?.id_cliente ||
+          sucursalToEdit.id_cliente,
+        nombre: sucursalToEdit.nombre_sucursal || sucursalToEdit.nombre || "",
         direccion: sucursalToEdit.direccion || "",
-        encargado_nombre: sucursalToEdit.encargado_nombre || "",
-        encargado_apellido: sucursalToEdit.encargado_apellido || "",
-        telefono: sucursalToEdit.telefono || "",
-        correo: sucursalToEdit.correo || "",
+        id_zona:
+          sucursalToEdit.zona?.id_zona ?? sucursalToEdit.id_zona ?? undefined,
+        encargado_nombre:
+          sucursalToEdit.encargado?.nombre ||
+          sucursalToEdit.encargado_nombre ||
+          "",
+        encargado_apellido:
+          sucursalToEdit.encargado?.apellido ||
+          sucursalToEdit.encargado_apellido ||
+          "",
+        telefono:
+          sucursalToEdit.encargado?.telefono_contacto ||
+          sucursalToEdit.telefono ||
+          "",
+        // Verificamos las distintas propiedades posibles donde la API puede enviar el correo
+        correo:
+          sucursalToEdit.encargado?.correo ||
+          sucursalToEdit.encargado?.correo_corporativo ||
+          sucursalToEdit.correo ||
+          "",
       });
     } else {
       reset({
         id_cliente: undefined,
         nombre: "",
         direccion: "",
+        id_zona: undefined,
         encargado_nombre: "",
         encargado_apellido: "",
         telefono: "",
@@ -111,27 +124,36 @@ export const SucursalForm = ({
 
   const onSubmit = async (data: SucursalFormData) => {
     try {
-      setIsSubmitting(true);
-      if (isEditing) {
-        console.log("Actualizar Sucursal Payload:", data);
-      } else {
-        console.log("Crear Sucursal y Cuenta Payload:", data);
-      }
+      const payload = {
+        id_cliente: Number(data.id_cliente),
+        nombre_sucursal: data.nombre,
+        direccion: data.direccion,
+        id_zona: data.id_zona ? Number(data.id_zona) : null,
+        encargado: {
+          nombre: data.encargado_nombre,
+          apellido: data.encargado_apellido,
+          telefono_contacto: data.telefono,
+          correo_corporativo: data.correo,
+        },
+      };
 
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      if (isEditing && sucursalToEdit) {
+        const id = sucursalToEdit.id_sucursal;
+        await actualizarSucursal(id, payload as any);
+      } else {
+        await crearSucursal(payload as any);
+      }
 
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Error al procesar la sucursal:", error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-      {/* Indicador de Pasos (Solo si es Creación) */}
+      {/* Indicador de Pasos (Solo en Creación) */}
       {!isEditing && (
         <div className="my-2 flex items-center justify-between px-2 py-1">
           <div
@@ -158,7 +180,7 @@ export const SucursalForm = ({
         </div>
       )}
 
-      {/* EDICIÓN (Todo en una sola vista) */}
+      {/* EDICIÓN */}
       {isEditing ? (
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -204,16 +226,56 @@ export const SucursalForm = ({
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold text-slate-700">
-              Nombre de la Sucursal <span className="text-red-500">*</span>
-            </Label>
-            <Input {...register("nombre")} className="h-10 text-xs" />
-            {errors.nombre && (
-              <p className="text-[11px] text-red-500 font-semibold">
-                {errors.nombre.message}
-              </p>
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-700">
+                Nombre de la Sucursal <span className="text-red-500">*</span>
+              </Label>
+              <Input {...register("nombre")} className="h-10 text-xs" />
+              {errors.nombre && (
+                <p className="text-[11px] text-red-500 font-semibold">
+                  {errors.nombre.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-700">
+                Zona Asignada
+              </Label>
+              <Controller
+                name="id_zona"
+                control={control}
+                render={({ field }) => {
+                  const currentLabel = zonas.find(
+                    (z) => String(z.value) === String(field.value),
+                  )?.label;
+                  return (
+                    <Select
+                      value={field.value != null ? String(field.value) : ""}
+                      onValueChange={(val) => field.onChange(Number(val))}
+                    >
+                      <SelectTrigger className="h-10 text-xs font-semibold bg-white">
+                        <SelectValue placeholder="Selecciona una zona...">
+                          {currentLabel || "Sin zona (Opcional)"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {zonas.map((z) => (
+                          <SelectItem
+                            key={String(z.value)}
+                            value={String(z.value)}
+                            className="text-xs font-medium"
+                          >
+                            {z.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -292,7 +354,7 @@ export const SucursalForm = ({
           </div>
         </div>
       ) : (
-        /* CREACIÓN (En 2 Pasos) */
+        /* CREACIÓN EN 2 PASOS */
         <>
           {step === 1 && (
             <div className="space-y-4">
@@ -339,20 +401,61 @@ export const SucursalForm = ({
                 )}
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">
-                  Nombre de la Sucursal <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  {...register("nombre")}
-                  placeholder="Ej. Sede Central, Planta Norte, Milan Abancay"
-                  className="h-10 text-xs"
-                />
-                {errors.nombre && (
-                  <p className="text-[11px] text-red-500 font-semibold">
-                    {errors.nombre.message}
-                  </p>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-700">
+                    Nombre de la Sucursal{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    {...register("nombre")}
+                    placeholder="Ej. Sede Central, Planta Norte"
+                    className="h-10 text-xs"
+                  />
+                  {errors.nombre && (
+                    <p className="text-[11px] text-red-500 font-semibold">
+                      {errors.nombre.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-700">
+                    Zona Asignada
+                  </Label>
+                  <Controller
+                    name="id_zona"
+                    control={control}
+                    render={({ field }) => {
+                      const currentLabel = zonas.find(
+                        (z) => String(z.value) === String(field.value),
+                      )?.label;
+                      return (
+                        <Select
+                          value={field.value != null ? String(field.value) : ""}
+                          onValueChange={(val) => field.onChange(Number(val))}
+                        >
+                          <SelectTrigger className="h-10 text-xs font-semibold bg-white">
+                            <SelectValue placeholder="Selecciona una zona...">
+                              {currentLabel || "Seleccionar zona"}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {zonas.map((z) => (
+                              <SelectItem
+                                key={String(z.value)}
+                                value={String(z.value)}
+                                className="text-xs font-medium"
+                              >
+                                {z.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      );
+                    }}
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -381,8 +484,7 @@ export const SucursalForm = ({
                 <span>
                   <strong>Nota:</strong> Este usuario tendrá el rol{" "}
                   <strong>CLIENTE SUCURSAL</strong> y recibirá un correo
-                  electrónico de verificación para habilitar sus credenciales de
-                  acceso.
+                  electrónico para establecer sus credenciales.
                 </span>
               </div>
 
@@ -460,13 +562,14 @@ export const SucursalForm = ({
         </>
       )}
 
-      {/* BOTONES INFERIORES DE ACCIÓN */}
+      {/* BOTONES ACCIÓN */}
       <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
         {!isEditing && step > 1 ? (
           <Button
             type="button"
             variant="outline"
             onClick={handlePrevStep}
+            disabled={isSubmitting}
             className="h-10 px-4 text-xs font-bold text-slate-700 border-slate-200 cursor-pointer"
           >
             Atrás
@@ -498,8 +601,9 @@ export const SucursalForm = ({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 px-5 text-xs font-bold bg-[#ff5722] hover:bg-[#f4511e] text-white shadow-sm cursor-pointer"
+              className="h-10 px-5 text-xs font-bold bg-[#ff5722] hover:bg-[#f4511e] text-white shadow-sm cursor-pointer flex items-center gap-2"
             >
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isSubmitting
                 ? "Guardando..."
                 : isEditing

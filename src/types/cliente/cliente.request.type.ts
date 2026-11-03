@@ -1,37 +1,41 @@
-// Sub-estructura para la sucursal principal
-export interface SucursalPrincipalRequest {
-  nombre: string;
-  telefono?: string;
-  correo?: string;
-  direccion?: string;
-}
-
-// Sub-estructura para sucursales adicionales
-export interface SucursalAdicionalRequest {
-  nombre: string;
-  encargado?: string;
-  telefono?: string;
-  correo?: string;
-  direccion?: string;
-}
-
-// Interfaz para la creación y edición de Clientes
-export interface ClienteRequest {
+// Sub-estructura para los datos de la empresa
+export interface DatosEmpresaRequest {
   tipo_cliente: "NATURAL" | "JURIDICA";
   numero_documento: string; // DNI o RUC
   nombre_principal: string; // Nombre o Razón Social
   direccion?: string;
-  telefono?: string;
-  correo?: string;
   rubro?: string;
-  fecha_inicio_plan?: string; // Formato YYYY-MM-DD
-  fecha_finalizacion_plan?: string; // Formato YYYY-MM-DD
-  costo_negociado?: number;
-  limite_equipos_contratado?: number;
   id_plan: number;
-  is_active?: boolean;
+}
 
-  // Estructuras opcionales para la creación con sucursales asociadas
-  sucursal_principal?: SucursalPrincipalRequest;
-  sucursales_adicionales?: SucursalAdicionalRequest[];
+// Sub-estructura para el usuario responsable de la empresa
+export interface ResponsableClienteRequest {
+  nombre: string;
+  apellido: string;
+  cargo: string;
+  telefono: string;
+  correo: string;
+}
+
+// Sub-estructura para la sucursal matriz/principal
+export interface SucursalPrincipalRequest {
+  nombre_sucursal: string;
+  encargado?: string;
+  direccion?: string;
+  is_principal: boolean;
+}
+
+// Payload atómico de creación (POST /clientes/create)
+export interface CrearClientePayload {
+  datos_empresa: DatosEmpresaRequest;
+  responsable: ResponsableClienteRequest;
+  sucursal_principal: SucursalPrincipalRequest;
+}
+
+// Payload de edición parcial (PATCH /clientes/{id})
+export interface ActualizarClientePayload {
+  nombre_principal?: string;
+  numero_documento?: string;
+  rubro?: string;
+  id_plan?: number;
 }

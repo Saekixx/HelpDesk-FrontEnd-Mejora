@@ -14,7 +14,6 @@ export const clienteSchema = z.object({
   numero_documento: z.string().refine(
     (val) => {
       if (!val) return false;
-      // Si es DNI (8) o RUC (11)
       return val.length === 8 || val.length === 11;
     },
     {
@@ -26,8 +25,12 @@ export const clienteSchema = z.object({
     .string()
     .min(1, "La Razón Social o Nombre es obligatorio"),
   direccion: z.string().optional(),
-  telefono: z.string().min(1, "El teléfono directo es obligatorio"),
-  correo: z.string().email("Correo electrónico inválido"),
+  telefono: z.string().optional().or(z.literal("")),
+  correo: z
+    .string()
+    .email("Correo electrónico inválido")
+    .optional()
+    .or(z.literal("")),
   rubro: z.string().optional(),
   id_plan: z.coerce.number({ error: "Selecciona un plan de soporte" }),
   is_active: z.boolean().optional(),

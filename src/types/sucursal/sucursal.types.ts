@@ -38,9 +38,6 @@ export interface SucursalListItem {
   id_zona?: number | null;
 }
 
-// Lo que devuelve el detalle completo (GET /sucursales/{id})
-export type SucursalDetail = SucursalListItem;
-
 // --- Parámetros de Consulta (Query Params) ---
 export interface GetSucursalesParams {
   id_cliente?: number;
@@ -48,4 +45,63 @@ export interface GetSucursalesParams {
   is_active?: boolean;
   page?: number;
   limit?: number;
+}
+
+export interface SucursalAreaVinculada {
+  id_area: number;
+  nombre_area: string;
+  is_active: boolean;
+}
+
+export interface SucursalClienteEmpresa {
+  id_cliente: number;
+  nombre_principal: string;
+  numero_documento: string;
+}
+
+export interface SucursalEncargado {
+  id_usuario?: number;
+  nombre: string;
+  apellido: string;
+  telefono_contacto: string;
+  correo_corporativo: string;
+}
+
+// Estructura de detalle de una sucursal (GET /sucursales/{id})
+export interface SucursalDetail {
+  id_sucursal: number;
+  nombre_sucursal: string;
+  is_active: boolean;
+  direccion: string;
+  id_zona: number | null;
+  areasVinculadas: SucursalAreaVinculada[];
+  clienteEmpresa: SucursalClienteEmpresa | null;
+  encargado: SucursalEncargado | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Estadísticas de sucursales (GET /sucursales/estadisticas)
+export interface SucursalesEstadisticas {
+  totalSucursales: { cantidad: number; nuevasEsteMes: number };
+  sedesPrincipales: { cantidad: number };
+  sucursalesOperativas: { cantidad: number };
+  areasCoberturadas: { cantidad: number };
+}
+
+// Payloads para creación y actualización
+export interface CrearSucursalPayload {
+  id_cliente: number;
+  nombre_sucursal: string;
+  direccion: string;
+  id_zona: number | null;
+  encargado: SucursalEncargado;
+}
+
+export interface ActualizarSucursalPayload {
+  id_cliente?: number;
+  nombre_sucursal?: string;
+  direccion?: string;
+  id_zona?: number | null;
+  encargado?: SucursalEncargado;
 }

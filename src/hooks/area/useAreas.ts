@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { getAreas, getAreaById } from "@/services/areas/area.service";
 import {
   AreaListItem,
-  AreaDetail,
   GetAreasParams,
+  AreaDetalle,
 } from "@/types/area/area.types";
 
 export const useAreas = () => {
@@ -24,7 +24,7 @@ export const useAreas = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Estados para detalle por ID (VER)
-  const [selectedArea, setSelectedArea] = useState<AreaDetail | null>(null);
+  const [selectedArea, setSelectedArea] = useState<AreaDetalle | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
 
   // 1. Obtener listado

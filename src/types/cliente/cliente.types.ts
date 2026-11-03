@@ -72,3 +72,40 @@ export interface GetClientesParams {
   page?: number;
   limit?: number;
 }
+
+// Estructura del plan contratado
+export interface ClienteDetailPlan {
+  id_plan: number;
+  tipo: string;
+  limite_equipos: number;
+}
+
+// Estructura del contacto de enlace principal
+export interface ClienteDetailContacto {
+  nombre_responsable: string;
+  cargo: string;
+  correo: string;
+  telefono: string;
+}
+
+// Estructura de las sucursales activas
+export interface ClienteDetailSucursal {
+  id_sucursal: number;
+  is_principal: boolean;
+  nombre: string;
+  direccion: string;
+  total_equipos: number;
+}
+
+// Estructura principal del detalle de cliente (GET /clientes/{id})
+export interface ClienteDetailData {
+  id_cliente: number;
+  nombre_principal: string;
+  numero_documento: string;
+  tipo_cliente: "NATURAL" | "JURIDICA";
+  rubro: string;
+  direccion: string;
+  plan: ClienteDetailPlan | null;
+  contacto_enlace: ClienteDetailContacto | null;
+  sucursales_activas: ClienteDetailSucursal[];
+}

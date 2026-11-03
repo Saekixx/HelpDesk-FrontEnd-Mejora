@@ -21,6 +21,7 @@ import { getSucursalesColumns } from "../components/sucursal/SucursalesColumns";
 import { ConfirmStatusModal } from "@/components/ConfirmStatusModal";
 import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
 import { SucursalModal } from "@/components/sucursal/SucursalModal";
+import { SucursalDetailModal } from "@/components/sucursal/SucursalDetailModal";
 
 function SucursalesPage() {
   const {
@@ -34,30 +35,38 @@ function SucursalesPage() {
     setLimit,
     resetQuery,
     refetch,
+    getDetalleSucursal,
+    selectedSucursal,
+    isLoadingDetail,
+    clearSelectedSucursal,
+    estadisticas,
   } = useSucursales();
 
-  // Obtenemos el listado de clientes para poblar el filtro desplegable y el select del formulario
-  const { clientes } = useCatalogOptions();
+  const { clientes, zonas } = useCatalogOptions();
 
   const { toggleSucursalStatus, isSubmitting: isTogglingStatus } =
     useSucursalMutations();
 
-  // Estados para los modales
+  // Estados para Modal de Confirmación de Estado
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [sucursalToToggle, setSucursalToToggle] =
     useState<SucursalListItem | null>(null);
 
-  // Estados para el Modal de Crear / Editar Sucursal
+  // Estados para Modal de Crear / Editar
   const [isSucursalModalOpen, setIsSucursalModalOpen] = useState(false);
   const [sucursalToEdit, setSucursalToEdit] = useState<any | null>(null);
+
+  // Estado para Modal de Vista de Detalle
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const handleOpenCreate = () => {
     setSucursalToEdit(null);
     setIsSucursalModalOpen(true);
   };
 
-  const handleViewDetail = (sucursal: SucursalListItem) => {
-    toast.info(`Ver detalle de sede: ${sucursal.nombre_sucursal}`);
+  const handleViewDetail = async (sucursal: SucursalListItem) => {
+    setIsDetailModalOpen(true);
+    await getDetalleSucursal(sucursal.id_sucursal);
   };
 
   const handleEdit = (sucursal: SucursalListItem) => {
@@ -103,7 +112,8 @@ function SucursalesPage() {
             <span>Gestión de Sucursales</span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 text-[#ff5722] border border-orange-200/60">
               <span className="w-1.5 h-1.5 rounded-full bg-[#ff5722]" />
-              {meta.total} Sucursales Registradas
+              {estadisticas?.totalSucursales?.cantidad ?? 0} Sucursales
+              Registradas
             </span>
           </div>
         }
@@ -130,29 +140,29 @@ function SucursalesPage() {
         }
       />
 
-      {/* 2. MÉTRICAS */}
+      {/* 2. MÉTRICAS (Usa datos de estadísticas de la API o respaldo) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           title="TOTAL SUCURSALES"
-          value={String(meta.total)}
+          value={String(estadisticas?.totalSucursales?.cantidad ?? meta.total)}
           icon={<Building2 className="h-5 w-5 text-orange-600" />}
           iconContainerClassName="bg-orange-50 text-orange-600"
         />
         <StatCard
           title="SEDES PRINCIPALES"
-          value="14"
+          value={String(estadisticas?.sedesPrincipales?.cantidad ?? 0)}
           icon={<Building className="h-5 w-5 text-blue-600" />}
           iconContainerClassName="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="SUCURSALES OPERATIVAS"
-          value="22"
+          value={String(estadisticas?.sucursalesOperativas?.cantidad ?? 0)}
           icon={<ShieldCheck className="h-5 w-5 text-emerald-600" />}
           iconContainerClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           title="ÁREAS COBERTURADAS"
-          value="68"
+          value={String(estadisticas?.areasCoberturadas?.cantidad ?? 0)}
           icon={<MapPinned className="h-5 w-5 text-purple-600" />}
           iconContainerClassName="bg-purple-50 text-purple-600"
         />
@@ -208,6 +218,18 @@ function SucursalesPage() {
         onSuccess={handleSuccessModal}
         sucursalToEdit={sucursalToEdit}
         clientes={clientes}
+        zonas={zonas}
+      />
+
+      {/* MODAL DE VISTA DETALLE DE SUCURSAL */}
+      <SucursalDetailModal
+        isOpen={isDetailModalOpen}
+        onOpenChange={(open) => {
+          setIsDetailModalOpen(open);
+          if (!open) clearSelectedSucursal();
+        }}
+        sucursal={selectedSucursal}
+        isLoading={isLoadingDetail}
       />
 
       {/* MODAL DE CONFIRMACIÓN DE ESTADO */}

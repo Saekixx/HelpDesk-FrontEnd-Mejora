@@ -4,6 +4,7 @@ export const sucursalSchema = z.object({
   id_cliente: z.coerce.number({ message: "Selecciona una empresa cliente" }),
   nombre: z.string().min(1, "El nombre de la sucursal es obligatorio"),
   direccion: z.string().min(1, "La dirección fiscal es obligatoria"),
+  id_zona: z.coerce.number().optional().nullable(),
   encargado_nombre: z.string().min(1, "El nombre del encargado es obligatorio"),
   encargado_apellido: z
     .string()

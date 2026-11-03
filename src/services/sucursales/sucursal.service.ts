@@ -5,6 +5,7 @@ import {
   GetSucursalesParams,
   SucursalListItem,
   SucursalDetail,
+  SucursalesEstadisticas,
 } from "@/types/sucursal/sucursal.types";
 
 /**
@@ -17,6 +18,19 @@ export const getSucursales = async (
   const response = await api.get<
     ApiResponse<NestedPaginatedResponse<SucursalListItem>>
   >("/sucursales", { params });
+  return response.data;
+};
+
+/**
+ * Obtener estadísticas (KPIs) de sucursales
+ * Endpoint: GET /sucursales/estadisticas
+ */
+export const getSucursalesEstadisticas = async (): Promise<
+  ApiResponse<SucursalesEstadisticas>
+> => {
+  const response = await api.get<ApiResponse<SucursalesEstadisticas>>(
+    "/sucursales/estadisticas",
+  );
   return response.data;
 };
 
@@ -34,7 +48,7 @@ export const getSucursalById = async (
 };
 
 /**
- * Crea una nueva sucursal en el sistema
+ * Crea una nueva sucursal y su cuenta de encargado local
  * Endpoint: POST /sucursales
  */
 export const crearSucursal = async (
@@ -70,5 +84,5 @@ export const toggleSucursalStatus = async (id: number): Promise<string> => {
   const response = await api.patch<ApiResponse<null>>(
     `/sucursales/${id}/toggle-status`,
   );
-  return response.data.message;
+  return response.data.message || "Estado de la sucursal actualizado con éxito";
 };

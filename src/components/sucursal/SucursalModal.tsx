@@ -16,6 +16,7 @@ interface SucursalModalProps {
   onSuccess: () => void;
   sucursalToEdit?: any | null;
   clientes?: SelectOption[];
+  zonas?: SelectOption[];
 }
 
 export const SucursalModal = ({
@@ -24,6 +25,7 @@ export const SucursalModal = ({
   onSuccess,
   sucursalToEdit,
   clientes = [],
+  zonas = [],
 }: SucursalModalProps) => {
   const isEditing = Boolean(sucursalToEdit);
   const handleClose = () => onOpenChange(false);
@@ -62,6 +64,7 @@ export const SucursalModal = ({
           onSuccess={onSuccess}
           onClose={handleClose}
           clientes={clientes}
+          zonas={zonas}
         />
       </DialogContent>
     </Dialog>

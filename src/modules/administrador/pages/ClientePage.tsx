@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { TableFiltersBar } from "@/components/table/TableFiltersBar";
 import { useClientes } from "@/hooks/cliente/useClientes";
+import { useClienteMutations } from "@/hooks/cliente/useClienteMutations";
+import { useClienteDetail } from "@/hooks/cliente/useClientes";
 import { DataTableContainer } from "@/components/table/DataTableContainer";
 import { TablePaginationBar } from "@/components/table/TablePaginationBar";
 import {
@@ -17,6 +19,9 @@ import { ClienteListItem, ClienteDetail } from "@/types/cliente/cliente.types";
 import { toast } from "sonner";
 import { getClientesColumns } from "../components/cliente/ClientesColumns";
 import { ClienteModal } from "@/components/cliente/ClienteModal";
+import { ClienteDetailModal } from "@/components/cliente/ClienteDetailModal";
+import { ConfirmStatusModal } from "@/components/ConfirmStatusModal";
+import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
 
 function ClientesPage() {
   const {
@@ -29,12 +34,31 @@ function ClientesPage() {
     setPage,
     setLimit,
     resetQuery,
+    refetch,
   } = useClientes();
+
+  const { planes } = useCatalogOptions();
+
+  // Hook de mutaciones para conectar el backend
+  const { toggleClienteStatus, isSubmitting: isTogglingStatus } =
+    useClienteMutations();
 
   // Estados para controlar el modal de Creación / Edición
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClienteToEdit, setSelectedClienteToEdit] =
     useState<ClienteDetail | null>(null);
+
+  // Estados para controlar el modal de VISTA DE DETALLE
+  const [detailClienteId, setDetailClienteId] = useState<number | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const { cliente: clienteDetail, isLoading: isLoadingDetail } =
+    useClienteDetail(detailClienteId);
+
+  // Estados para controlar el MODAL DE CONFIRMACIÓN DE ESTADO
+  const [isConfirmStatusOpen, setIsConfirmStatusOpen] = useState(false);
+  const [clienteToToggle, setClienteToToggle] =
+    useState<ClienteListItem | null>(null);
 
   // Abrir modal para CREAR (pasando null)
   const handleOpenCreate = () => {
@@ -42,41 +66,66 @@ function ClientesPage() {
     setIsModalOpen(true);
   };
 
+  // Manejar vista de detalle corporativo
   const handleViewDetail = (cliente: ClienteListItem) => {
-    toast.info(`Ver detalle corporativo de: ${cliente.nombre_principal}`);
+    setDetailClienteId(cliente.id_cliente);
+    setIsDetailOpen(true);
   };
 
-  // Abrir modal para EDITAR (pasando el cliente seleccionado)
-  // Nota: Si tu tabla devuelve un ClienteListItem y el modal espera ClienteDetail,
-  // puedes hacer un cast o buscar el detalle si es necesario.
+  // Abrir modal para EDITAR
   const handleEdit = (cliente: ClienteListItem) => {
-    // Convertimos temporalmente el ListItem al formato que requiere el modal de edición
     setSelectedClienteToEdit({
       id_cliente: cliente.id_cliente,
       tipo_cliente: cliente.tipo_cliente,
       numero_documento: cliente.numero_documento,
       nombre_principal: cliente.nombre_principal,
       rubro: cliente.rubro,
-      id_plan: 1, // Ajusta según corresponda o mapea desde tu lista
-      is_active: cliente.estado === "activo",
+      id_plan:
+        typeof cliente.planSoporte === "object" && cliente.planSoporte !== null
+          ? (cliente.planSoporte as any).id_plan
+          : 1,
+      is_active: cliente.is_active,
     } as ClienteDetail);
 
     setIsModalOpen(true);
   };
 
-  const handleToggleStatus = (cliente: ClienteListItem) => {
-    toast.info(`Cambiar estado de enlace para: ${cliente.nombre_principal}`);
+  // Paso 1: Abrir modal de confirmación para cambiar estado
+  const handleOpenToggleStatus = (cliente: ClienteListItem) => {
+    setClienteToToggle(cliente);
+    setIsConfirmStatusOpen(true);
   };
 
-  // Callback cuando la creación o edición es exitosa
+  // Paso 2: Confirmar y ejecutar la mutación de estado
+  const handleConfirmToggleStatus = async () => {
+    if (!clienteToToggle) return;
+    try {
+      const message = await toggleClienteStatus(clienteToToggle.id_cliente);
+      toast.success(message || "Estado del cliente actualizado correctamente");
+      setIsConfirmStatusOpen(false);
+      setClienteToToggle(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Error al cambiar el estado del cliente");
+    }
+  };
+
+  // Callback cuando la creación o edición es exitosa desde el modal/form
   const handleSuccess = () => {
     toast.success(
       selectedClienteToEdit
         ? "Cliente actualizado con éxito"
         : "Empresa registrada con éxito",
     );
-    // Aquí puedes llamar a tu función de refetch de la tabla si la tienes en el hook useClientes
+    refetch(); // Recargamos la tabla automáticamente
   };
+
+  // Determinar si el cliente seleccionado está activo
+  const isClienteActive =
+    clienteToToggle?.is_active === true ||
+    (clienteToToggle?.estado as any) === 1 ||
+    (clienteToToggle?.estado as any) === "1" ||
+    String(clienteToToggle?.estado).toLowerCase() === "activo";
 
   return (
     <div className="p-6 bg-slate-50/50 min-h-screen space-y-4">
@@ -95,7 +144,6 @@ function ClientesPage() {
         description="Directorio corporativo, control de contratos, sucursales y cuentas de enlace principal."
         actions={
           <div className="flex items-center gap-2.5">
-            {/* BOTÓN NUEVA EMPRESA */}
             <Button
               onClick={handleOpenCreate}
               className="bg-[#ff5722] hover:bg-[#f4511e] text-white font-bold h-10 px-4 rounded-xl shadow-sm cursor-pointer text-xs"
@@ -111,25 +159,29 @@ function ClientesPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           title="TOTAL CLIENTES"
-          value="18"
+          value={String(meta.total)}
           icon={<Building2 className="h-5 w-5 text-orange-600" />}
           iconContainerClassName="bg-orange-50 text-orange-600"
         />
         <StatCard
           title="CLIENTES JURÍDICOS"
-          value="14"
+          value={String(
+            clientes.filter((c) => c.tipo_cliente === "JURIDICA").length,
+          )}
           icon={<Building className="h-5 w-5 text-blue-600" />}
           iconContainerClassName="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="CLIENTES NATURALES"
-          value="4"
+          value={String(
+            clientes.filter((c) => c.tipo_cliente === "NATURAL").length,
+          )}
           icon={<UserCheck className="h-5 w-5 text-purple-600" />}
           iconContainerClassName="bg-purple-50 text-purple-600"
         />
         <StatCard
-          title="PLANES ENTERPRISE"
-          value="12"
+          title="PLANES ACTIVOS"
+          value={String(clientes.filter((c) => c.is_active).length)}
           icon={<ShieldAlert className="h-5 w-5 text-amber-600" />}
           iconContainerClassName="bg-amber-50 text-amber-600"
         />
@@ -167,7 +219,7 @@ function ClientesPage() {
         columns={getClientesColumns({
           onViewDetail: handleViewDetail,
           onEdit: handleEdit,
-          onToggleStatus: handleToggleStatus,
+          onToggleStatus: handleOpenToggleStatus,
         })}
         keyExtractor={(cli) => cli.id_cliente}
         isLoading={isLoading}
@@ -187,10 +239,32 @@ function ClientesPage() {
         onOpenChange={setIsModalOpen}
         clienteToEdit={selectedClienteToEdit}
         onSuccess={handleSuccess}
-        planes={[
-          { label: "Enterprise SLA 24/7 (Alta Prioridad)", value: 1 },
-          { label: "Soporte Estándar 8x5", value: 2 },
-        ]}
+        planes={planes}
+      />
+
+      {/* 7. MODAL DE VISTA DETALLE CORPORATIVO */}
+      <ClienteDetailModal
+        isOpen={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        cliente={clienteDetail}
+        isLoading={isLoadingDetail}
+      />
+
+      {/* 8. MODAL DE CONFIRMACIÓN DE CAMBIO DE ESTADO */}
+      <ConfirmStatusModal
+        isOpen={isConfirmStatusOpen}
+        onOpenChange={setIsConfirmStatusOpen}
+        isActive={isClienteActive}
+        itemName={clienteToToggle?.nombre_principal}
+        itemSubInfo={`RUC/DOC: ${clienteToToggle?.numero_documento || "N/A"}`}
+        itemBadge={clienteToToggle?.tipo_cliente}
+        description={
+          isClienteActive
+            ? "Al desactivar este cliente, se restringirá temporalmente el acceso y la gestión de sus sucursales en el sistema."
+            : "Al activar este cliente, se restablecerán los permisos y accesos operativos correspondientes."
+        }
+        isLoading={isTogglingStatus}
+        onConfirm={handleConfirmToggleStatus}
       />
     </div>
   );

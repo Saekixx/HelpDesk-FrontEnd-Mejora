@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { areaSchema, AreaFormData } from "@/schema/area/area.schema";
 import { SelectOption } from "@/shared/types/select-option.types";
+import { useAreaMutations } from "@/hooks/area/useAreaMutations";
 
 interface AreaFormProps {
   areaToEdit?: any | null;
@@ -20,7 +21,7 @@ interface AreaFormProps {
   onClose: () => void;
   clientes?: SelectOption[];
   sucursales?: SelectOption[];
-  onClienteChange?: (clienteId: number | null) => void;
+  onClienteChange?: (clienteId: string | number) => void;
 }
 
 export const AreaForm = ({
@@ -32,95 +33,88 @@ export const AreaForm = ({
   onClienteChange,
 }: AreaFormProps) => {
   const isEditing = Boolean(areaToEdit);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { crearArea, actualizarArea, isSubmitting } = useAreaMutations();
 
   const {
     register,
     handleSubmit,
     control,
     watch,
+    setValue,
     reset,
     formState: { errors },
   } = useForm<AreaFormData>({
     resolver: zodResolver(areaSchema) as unknown as Resolver<AreaFormData>,
     defaultValues: {
-      id_cliente: undefined,
-      id_sucursal: undefined,
+      id_cliente: "",
+      id_sucursal: "",
       nombre_area: "",
       contacto_encargado: "",
       telefono: "",
       correo: "",
-    },
+    } as any,
   });
 
   const selectedClienteId = watch("id_cliente");
 
-  // Notificar al padre cada vez que cambie la empresa seleccionada
-  React.useEffect(() => {
-    if (onClienteChange) {
-      onClienteChange(selectedClienteId ? Number(selectedClienteId) : null);
-    }
-  }, [selectedClienteId, onClienteChange]);
-
-  // Cargar datos al editar o limpiar al crear
+  // Rellenar o resetear formulario sólo al cambiar areaToEdit
   React.useEffect(() => {
     if (areaToEdit) {
       const clienteId =
+        areaToEdit.cliente?.id_cliente ??
         areaToEdit.id_cliente ??
         areaToEdit.id_empresa ??
-        areaToEdit.empresa_id ??
-        areaToEdit.sucursal?.id_cliente ??
-        areaToEdit.cliente_empresa?.id ??
-        undefined;
+        "";
 
       const sucursalId =
-        areaToEdit.id_sucursal ??
-        areaToEdit.sucursal?.id_sucursal ??
-        areaToEdit.sucursal?.id ??
-        undefined;
+        areaToEdit.sucursal?.id_sucursal ?? areaToEdit.id_sucursal ?? "";
+
+      // Disparamos la carga de sucursales del cliente actual
+      if (clienteId && onClienteChange) {
+        onClienteChange(clienteId);
+      }
 
       reset({
-        id_cliente: clienteId ? Number(clienteId) : undefined,
-        id_sucursal: sucursalId ? Number(sucursalId) : undefined,
-        nombre_area: areaToEdit.nombre_area || areaToEdit.nombre || "",
-        contacto_encargado:
-          areaToEdit.contacto_encargado || areaToEdit.encargado || "",
+        id_cliente: clienteId != null ? String(clienteId) : "",
+        id_sucursal: sucursalId != null ? String(sucursalId) : "",
+        nombre_area: areaToEdit.nombre_area || "",
+        contacto_encargado: areaToEdit.contacto || "",
         telefono: areaToEdit.telefono || "",
         correo: areaToEdit.correo || "",
-      });
-
-      if (clienteId && onClienteChange) {
-        onClienteChange(Number(clienteId));
-      }
+      } as any);
     } else {
       reset({
-        id_cliente: undefined,
-        id_sucursal: undefined,
+        id_cliente: "",
+        id_sucursal: "",
         nombre_area: "",
         contacto_encargado: "",
         telefono: "",
         correo: "",
-      });
+      } as any);
     }
   }, [areaToEdit, reset]);
 
-  const onSubmit = async (data: AreaFormData) => {
+  const onSubmit = async (data: any) => {
     try {
-      setIsSubmitting(true);
-      if (isEditing) {
-        console.log("Actualizar Área Payload:", data);
-      } else {
-        console.log("Crear Área Payload:", data);
-      }
+      const payload = {
+        id_sucursal: Number(data.id_sucursal),
+        nombre_area: data.nombre_area,
+        contacto: data.contacto_encargado || undefined,
+        telefono: data.telefono || undefined,
+        correo: data.correo || undefined,
+      };
 
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      if (isEditing && areaToEdit) {
+        const id = areaToEdit.id_area;
+        await actualizarArea(id, payload);
+      } else {
+        await crearArea(payload);
+      }
 
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Error al procesar el área:", error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -140,18 +134,25 @@ export const AreaForm = ({
             )?.label;
             return (
               <Select
-                key={field.value ?? "empresa-empty"}
                 value={field.value != null ? String(field.value) : ""}
                 onValueChange={(val) => {
-                  field.onChange(Number(val));
+                  field.onChange(val);
+                  // Limpiamos la sucursal seleccionada al cambiar de empresa
+                  setValue("id_sucursal", "");
+                  if (onClienteChange) {
+                    onClienteChange(val);
+                  }
                 }}
               >
                 <SelectTrigger className="h-10 text-xs font-semibold bg-white">
                   <SelectValue placeholder="Selecciona una empresa cliente...">
-                    {currentLabel || undefined}
+                    {currentLabel ||
+                      (isEditing && field.value
+                        ? `Cargando... (${field.value})`
+                        : undefined)}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="max-h-60 z-[9999] bg-white shadow-lg border border-slate-200">
+                <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
                   {clientes.map((c) => (
                     <SelectItem
                       key={String(c.value)}
@@ -187,9 +188,8 @@ export const AreaForm = ({
             )?.label;
             return (
               <Select
-                key={`${selectedClienteId}-${field.value ?? "sucursal-empty"}`}
                 value={field.value != null ? String(field.value) : ""}
-                onValueChange={(val) => field.onChange(Number(val))}
+                onValueChange={(val) => field.onChange(val)}
                 disabled={!selectedClienteId}
               >
                 <SelectTrigger className="h-10 text-xs font-semibold bg-white">
@@ -200,10 +200,13 @@ export const AreaForm = ({
                         : "Primero selecciona una empresa..."
                     }
                   >
-                    {currentLabel || undefined}
+                    {currentLabel ||
+                      (isEditing && field.value
+                        ? `Cargando... (${field.value})`
+                        : undefined)}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="max-h-60 z-[9999] bg-white shadow-lg border border-slate-200">
+                <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
                   {sucursales.map((s) => (
                     <SelectItem
                       key={String(s.value)}
@@ -242,7 +245,7 @@ export const AreaForm = ({
         )}
       </div>
 
-      {/* RESPONSABLE DEL ÁREA (SECCIÓN INFORMATIVA) */}
+      {/* RESPONSABLE DEL ÁREA */}
       <div className="pt-2 border-t border-slate-100 space-y-3">
         <div>
           <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
@@ -285,7 +288,7 @@ export const AreaForm = ({
         </div>
       </div>
 
-      {/* BOTONES INFERIORES DE ACCIÓN */}
+      {/* BOTONES INFERIORES */}
       <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
         <Button
           type="button"

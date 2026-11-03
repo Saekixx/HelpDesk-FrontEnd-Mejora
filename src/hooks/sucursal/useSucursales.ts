@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getSucursales,
   getSucursalById,
+  getSucursalesEstadisticas,
 } from "@/services/sucursales/sucursal.service";
 import {
   SucursalListItem,
   SucursalDetail,
   GetSucursalesParams,
+  SucursalesEstadisticas,
 } from "@/types/sucursal/sucursal.types";
 
 export const useSucursales = () => {
@@ -26,10 +28,16 @@ export const useSucursales = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados para obtener el detalle por ID
+  // Estados para obtener el detalle por ID (VER)
   const [selectedSucursal, setSelectedSucursal] =
     useState<SucursalDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
+
+  // Estados para estadísticas / KPIs
+  const [estadisticas, setEstadisticas] =
+    useState<SucursalesEstadisticas | null>(null);
+  const [isLoadingEstadisticas, setIsLoadingEstadisticas] =
+    useState<boolean>(false);
 
   // 1. Obtener listado de sucursales
   const fetchSucursales = useCallback(async () => {
@@ -68,7 +76,26 @@ export const useSucursales = () => {
     fetchSucursales();
   }, [fetchSucursales]);
 
-  // 2. Obtener el detalle completo de una sucursal por ID (VER)
+  // 2. Obtener estadísticas (KPIs)
+  const fetchEstadisticas = useCallback(async () => {
+    setIsLoadingEstadisticas(true);
+    try {
+      const response = await getSucursalesEstadisticas();
+      if (response && response.data) {
+        setEstadisticas(response.data);
+      }
+    } catch (err: any) {
+      console.error("Error al obtener estadísticas de sucursales:", err);
+    } finally {
+      setIsLoadingEstadisticas(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEstadisticas();
+  }, [fetchEstadisticas]);
+
+  // 3. Obtener el detalle completo de una sucursal por ID (VER)
   const getDetalleSucursal = useCallback(async (id: number) => {
     setIsLoadingDetail(true);
     try {
@@ -140,6 +167,11 @@ export const useSucursales = () => {
     setLimit,
     resetQuery,
     refetch: fetchSucursales,
+
+    // Estadísticas / KPIs
+    estadisticas,
+    isLoadingEstadisticas,
+    refetchEstadisticas: fetchEstadisticas,
 
     // Consulta de Detalle (VER)
     selectedSucursal,

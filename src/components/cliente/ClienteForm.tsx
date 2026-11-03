@@ -11,14 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Mail } from "lucide-react";
+import { Building2, Mail, Loader2 } from "lucide-react";
 import { ClienteDetail } from "@/types/cliente/cliente.types";
-import { ClienteRequest } from "@/types/cliente/cliente.request.type";
 import {
   clienteSchema,
   ClienteFormData,
 } from "@/schema/cliente/cliente.schema";
 import { SelectOption } from "@/shared/types/select-option.types";
+import { useClienteMutations } from "@/hooks/cliente/useClienteMutations";
+import { toast } from "sonner";
 
 interface ClienteFormProps {
   clienteToEdit?: ClienteDetail | null;
@@ -40,7 +41,9 @@ export const ClienteForm = ({
 }: ClienteFormProps) => {
   const isEditing = Boolean(clienteToEdit);
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const { crearCliente, actualizarCliente, isSubmitting } =
+    useClienteMutations();
 
   const {
     register,
@@ -65,12 +68,12 @@ export const ClienteForm = ({
       id_plan: undefined,
       is_active: true,
       sucursal_principal: {
-        nombre: "Sucursal Norte",
-        encargado_nombre: "Carlos",
-        encargado_apellido: "Mendoza",
-        telefono: "+51912345678",
-        correo: "norte@acme.com",
-        direccion: "Av. Los Olivos 789",
+        nombre: "",
+        encargado_nombre: "",
+        encargado_apellido: "",
+        telefono: "",
+        correo: "",
+        direccion: "",
       },
     },
   });
@@ -78,7 +81,7 @@ export const ClienteForm = ({
   const nombreWatch = watch("nombre_principal");
   const tipoClienteWatch = watch("tipo_cliente");
 
-  // Rellenar o resetear formulario
+  // Rellenar o resetear formulario al abrir/editar
   React.useEffect(() => {
     if (clienteToEdit) {
       reset({
@@ -95,17 +98,14 @@ export const ClienteForm = ({
             : undefined,
         is_active: clienteToEdit.is_active ?? true,
         sucursal_principal: {
-          nombre: clienteToEdit.sucursales?.[0]?.nombre || "Sucursal Norte",
+          nombre: clienteToEdit.sucursales?.[0]?.nombre || "",
           encargado_nombre:
-            (clienteToEdit.sucursales?.[0] as any)?.encargado_nombre ||
-            "Carlos",
+            (clienteToEdit.sucursales?.[0] as any)?.encargado_nombre || "",
           encargado_apellido:
-            (clienteToEdit.sucursales?.[0] as any)?.encargado_apellido ||
-            "Mendoza",
-          telefono: clienteToEdit.sucursales?.[0]?.telefono || "+51912345678",
-          correo: clienteToEdit.sucursales?.[0]?.correo || "norte@acme.com",
-          direccion:
-            clienteToEdit.sucursales?.[0]?.direccion || "Av. Los Olivos 789",
+            (clienteToEdit.sucursales?.[0] as any)?.encargado_apellido || "",
+          telefono: clienteToEdit.sucursales?.[0]?.telefono || "",
+          correo: clienteToEdit.sucursales?.[0]?.correo || "",
+          direccion: clienteToEdit.sucursales?.[0]?.direccion || "",
         },
       });
     } else {
@@ -120,12 +120,12 @@ export const ClienteForm = ({
         id_plan: undefined,
         is_active: true,
         sucursal_principal: {
-          nombre: "Sucursal Norte",
-          encargado_nombre: "Carlos",
-          encargado_apellido: "Mendoza",
-          telefono: "+51912345678",
-          correo: "norte@acme.com",
-          direccion: "Av. Los Olivos 789",
+          nombre: "",
+          encargado_nombre: "",
+          encargado_apellido: "",
+          telefono: "",
+          correo: "",
+          direccion: "",
         },
       });
       setStep(1);
@@ -167,47 +167,65 @@ export const ClienteForm = ({
     setStep((prev) => (prev - 1) as 1 | 2 | 3);
   };
 
+  // Función onSubmit adaptada para usar lo ingresado o defaults limpios si están vacíos
   const onSubmit = async (data: ClienteFormData) => {
     try {
-      setIsSubmitting(true);
-      const payload: ClienteRequest = {
-        tipo_cliente: data.tipo_cliente,
-        numero_documento: data.numero_documento,
-        nombre_principal: data.nombre_principal,
-        direccion: data.direccion,
-        telefono: data.telefono,
-        correo: data.correo,
-        rubro: data.rubro,
-        fecha_inicio_plan: clienteToEdit?.fecha_inicio_plan || undefined,
-        fecha_finalizacion_plan:
-          clienteToEdit?.fecha_finalizacion_plan || undefined,
-        costo_negociado: clienteToEdit?.costo_negociado || undefined,
-        limite_equipos_contratado:
-          clienteToEdit?.limite_equipos_contratado || undefined,
-        id_plan: Number(data.id_plan),
-        is_active: data.is_active ?? true,
-        sucursal_principal: !isEditing
-          ? (data.sucursal_principal as any)
-          : undefined,
-      };
-
       if (isEditing && clienteToEdit) {
-        console.log("Actualizar Payload:", payload);
+        await actualizarCliente(clienteToEdit.id_cliente, {
+          nombre_principal: data.nombre_principal,
+          numero_documento: data.numero_documento,
+          rubro: data.rubro,
+          id_plan: Number(data.id_plan),
+        });
       } else {
-        console.log("Crear Payload:", payload);
+        const encNombre =
+          data.sucursal_principal?.encargado_nombre || "Encargado";
+        const encApellido =
+          data.sucursal_principal?.encargado_apellido || "Principal";
+
+        const payload = {
+          datos_empresa: {
+            tipo_cliente: data.tipo_cliente,
+            numero_documento: data.numero_documento,
+            nombre_principal: data.nombre_principal,
+            direccion: data.direccion || "",
+            rubro: data.rubro || "",
+            id_plan: Number(data.id_plan),
+          },
+          responsable: {
+            nombre: encNombre,
+            apellido: encApellido,
+            cargo: "Gerente de TI",
+            telefono: data.telefono,
+            correo: data.correo,
+          },
+          sucursal_principal: {
+            nombre_sucursal: data.sucursal_principal?.nombre || "Sede Central",
+            encargado: `${encNombre} ${encApellido}`,
+            direccion:
+              data.sucursal_principal?.direccion || "Dirección principal",
+            is_principal: true,
+          },
+        };
+
+        await crearCliente(payload as any);
       }
 
       onSuccess();
       onClose();
-    } catch (error) {
-      console.error("Error al procesar el cliente:", error);
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: any) {
+      console.error("Error al procesar la empresa cliente:", error);
+      toast.error(error?.message || "Ocurrió un error al guardar la empresa.");
     }
   };
 
+  const onError = (errors: any) => {
+    console.error("Errores de validación en el formulario:", errors);
+    toast.error("Por favor completa los campos obligatorios requeridos.");
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4 pt-2">
       {/* Indicador de Pasos */}
       {!isEditing && (
         <div className="my-2 flex items-center justify-between px-2 py-1">
@@ -550,7 +568,6 @@ export const ClienteForm = ({
 
           {step === 3 && (
             <div className="space-y-4">
-              {/* Alerta informativa de verificación de cuenta sucursal */}
               <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-800 font-medium flex items-start gap-2.5">
                 <Mail className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                 <span>
@@ -575,18 +592,18 @@ export const ClienteForm = ({
                     </Label>
                     <Input
                       {...register("sucursal_principal.nombre")}
+                      placeholder="Ej. Sede Central / Sucursal Norte"
                       className="h-10 text-xs bg-white"
                     />
                   </div>
 
-                  {/* Nombre y Apellido del Encargado Local TI divididos */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-700">
                       Nombre del Encargado TI
                     </Label>
                     <Input
                       {...register("sucursal_principal.encargado_nombre")}
-                      placeholder="Ej. Carlos"
+                      placeholder="Ej. Juan"
                       className="h-10 text-xs bg-white"
                     />
                   </div>
@@ -597,7 +614,7 @@ export const ClienteForm = ({
                     </Label>
                     <Input
                       {...register("sucursal_principal.encargado_apellido")}
-                      placeholder="Ej. Mendoza"
+                      placeholder="Ej. Pérez"
                       className="h-10 text-xs bg-white"
                     />
                   </div>
@@ -608,6 +625,7 @@ export const ClienteForm = ({
                     </Label>
                     <Input
                       {...register("sucursal_principal.telefono")}
+                      placeholder="+51 912 345 678"
                       className="h-10 text-xs bg-white"
                     />
                   </div>
@@ -618,6 +636,7 @@ export const ClienteForm = ({
                     </Label>
                     <Input
                       {...register("sucursal_principal.correo")}
+                      placeholder="sede@empresa.com"
                       className="h-10 text-xs bg-white"
                     />
                   </div>
@@ -628,6 +647,7 @@ export const ClienteForm = ({
                     </Label>
                     <Input
                       {...register("sucursal_principal.direccion")}
+                      placeholder="Ej. Av. Los Pinos 456"
                       className="h-10 text-xs bg-white"
                     />
                   </div>
@@ -649,6 +669,7 @@ export const ClienteForm = ({
             type="button"
             variant="outline"
             onClick={handlePrevStep}
+            disabled={isSubmitting}
             className="h-10 px-4 text-xs font-bold text-slate-700 border-slate-200 cursor-pointer"
           >
             Atrás
@@ -680,8 +701,9 @@ export const ClienteForm = ({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 px-5 text-xs font-bold bg-[#ff5722] hover:bg-[#f4511e] text-white shadow-sm cursor-pointer"
+              className="h-10 px-5 text-xs font-bold bg-[#ff5722] hover:bg-[#f4511e] text-white shadow-sm cursor-pointer flex items-center gap-2"
             >
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isSubmitting
                 ? "Guardando..."
                 : isEditing

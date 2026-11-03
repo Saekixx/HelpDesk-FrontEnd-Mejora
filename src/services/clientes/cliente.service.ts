@@ -1,10 +1,14 @@
 import { api } from "@/lib/axios";
 import { ApiResponse, NestedPaginatedResponse } from "@/types/api.types";
-import { ClienteRequest } from "@/types/cliente/cliente.request.type";
+import {
+  ActualizarClientePayload,
+  CrearClientePayload,
+} from "@/types/cliente/cliente.request.type";
 import {
   GetClientesParams,
   ClienteListItem,
   ClienteDetail,
+  ClienteDetailData,
 } from "@/types/cliente/cliente.types";
 
 /**
@@ -21,37 +25,39 @@ export const getClientes = async (
 };
 
 /**
- * Obtener el detalle completo de un cliente por ID (incluyendo plan y sucursales)
+ * Obtiene el detalle completo del cliente/empresa para el modal de vista.
  * Endpoint: GET /clientes/{id}
  */
-export const getClienteById = async (
+export const getClienteDetailById = async (
   id: number,
-): Promise<ApiResponse<ClienteDetail>> => {
-  const response = await api.get<ApiResponse<ClienteDetail>>(`/clientes/${id}`);
+): Promise<ApiResponse<ClienteDetailData>> => {
+  const response = await api.get<ApiResponse<ClienteDetailData>>(
+    `/clientes/${id}`,
+  );
   return response.data;
 };
 
 /**
- * Crea un nuevo cliente en el sistema
- * Endpoint: POST /clientes
+ * Registra una empresa cliente y su cuenta principal (Operación atómica)
+ * Endpoint: POST /clientes/create
  */
 export const crearCliente = async (
-  data: ClienteRequest,
+  data: CrearClientePayload,
 ): Promise<ApiResponse<ClienteDetail>> => {
   const response = await api.post<ApiResponse<ClienteDetail>>(
-    "/clientes/create",
+    "/clientes",
     data,
   );
   return response.data;
 };
 
 /**
- * Actualiza un cliente existente por ID
+ * Actualiza los datos parciales de un cliente existente por ID
  * Endpoint: PATCH /clientes/{id}
  */
 export const actualizarCliente = async (
   id: number,
-  data: Partial<ClienteRequest>,
+  data: ActualizarClientePayload,
 ): Promise<ApiResponse<ClienteDetail>> => {
   const response = await api.patch<ApiResponse<ClienteDetail>>(
     `/clientes/${id}`,
@@ -61,7 +67,7 @@ export const actualizarCliente = async (
 };
 
 /**
- * Alterna el estado is_active de un cliente por ID (soft toggle)
+ * Alterna el estado (Activo/Inactivo) de un cliente por ID
  * Endpoint: PATCH /clientes/{id}/toggle-status
  */
 export const toggleClienteStatus = async (id: number): Promise<string> => {
