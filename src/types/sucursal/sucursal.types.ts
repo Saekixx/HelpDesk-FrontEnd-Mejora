@@ -89,13 +89,20 @@ export interface SucursalesEstadisticas {
   areasCoberturadas: { cantidad: number };
 }
 
+export interface SucursalEncargadoPayload {
+  nombre: string;
+  apellido: string;
+  telefono_contacto: string;
+  correo_corporativo: string;
+}
+
 // Payloads para creación y actualización
 export interface CrearSucursalPayload {
   id_cliente: number;
   nombre_sucursal: string;
   direccion: string;
   id_zona: number | null;
-  encargado: SucursalEncargado;
+  encargado: SucursalEncargadoPayload;
 }
 
 export interface ActualizarSucursalPayload {
@@ -103,5 +110,5 @@ export interface ActualizarSucursalPayload {
   nombre_sucursal?: string;
   direccion?: string;
   id_zona?: number | null;
-  encargado?: SucursalEncargado;
+  encargado?: SucursalEncargadoPayload;
 }

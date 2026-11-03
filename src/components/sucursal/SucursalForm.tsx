@@ -19,13 +19,14 @@ import {
 import { SelectOption } from "@/shared/types/select-option.types";
 import { useSucursalMutations } from "@/hooks/sucursal/useSucursalMutations";
 import { SucursalListItem } from "@/types/sucursal/sucursal.types";
+import { toast } from "sonner";
 
 interface SucursalFormProps {
   sucursalToEdit?: SucursalListItem | any | null;
   onSuccess: () => void;
   onClose: () => void;
   clientes?: SelectOption[];
-  zonas?: SelectOption[]; // <- Prop para el catálogo de zonas
+  zonas?: SelectOption[];
 }
 
 export const SucursalForm = ({
@@ -47,6 +48,7 @@ export const SucursalForm = ({
     control,
     trigger,
     reset,
+    setError,
     formState: { errors },
   } = useForm<SucursalFormData>({
     resolver: zodResolver(
@@ -87,7 +89,6 @@ export const SucursalForm = ({
           sucursalToEdit.encargado?.telefono_contacto ||
           sucursalToEdit.telefono ||
           "",
-        // Verificamos las distintas propiedades posibles donde la API puede enviar el correo
         correo:
           sucursalToEdit.encargado?.correo ||
           sucursalToEdit.encargado?.correo_corporativo ||
@@ -146,8 +147,34 @@ export const SucursalForm = ({
 
       onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al procesar la sucursal:", error);
+
+      // Capturamos el mensaje que devuelve el backend
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Ocurrió un error al procesar la sucursal.";
+
+      // Verificamos si el error corresponde a un correo duplicado o existente
+      if (
+        errorMessage.toLowerCase().includes("correo") ||
+        errorMessage.toLowerCase().includes("email") ||
+        errorMessage.toLowerCase().includes("registrado") ||
+        errorMessage.toLowerCase().includes("usado")
+      ) {
+        setError("correo", {
+          type: "server",
+          message: errorMessage,
+        });
+
+        // Si está en el paso 1, lo movemos al paso 2 para que visualice el error en el input de correo
+        if (!isEditing) {
+          setStep(2);
+        }
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -157,10 +184,14 @@ export const SucursalForm = ({
       {!isEditing && (
         <div className="my-2 flex items-center justify-between px-2 py-1">
           <div
-            className={`flex items-center gap-2 text-xs ${step >= 1 ? "text-[#ff5722] font-semibold" : "text-slate-400"}`}
+            className={`flex items-center gap-2 text-xs ${
+              step >= 1 ? "text-[#ff5722] font-semibold" : "text-slate-400"
+            }`}
           >
             <span
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] text-white ${step >= 1 ? "bg-[#ff5722]" : "bg-slate-300"}`}
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] text-white ${
+                step >= 1 ? "bg-[#ff5722]" : "bg-slate-300"
+              }`}
             >
               1
             </span>
@@ -168,10 +199,14 @@ export const SucursalForm = ({
           </div>
           <div className="h-0.5 w-16 bg-slate-200" />
           <div
-            className={`flex items-center gap-2 text-xs ${step === 2 ? "text-[#ff5722] font-semibold" : "text-slate-400"}`}
+            className={`flex items-center gap-2 text-xs ${
+              step === 2 ? "text-[#ff5722] font-semibold" : "text-slate-400"
+            }`}
           >
             <span
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] text-white ${step === 2 ? "bg-[#ff5722]" : "bg-slate-300"}`}
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] text-white ${
+                step === 2 ? "bg-[#ff5722]" : "bg-slate-300"
+              }`}
             >
               2
             </span>
