@@ -20,6 +20,7 @@ import {
 } from "@/modules/administrador/components/ticket/TicketsColumns";
 import { useTickets } from "@/hooks/ticket/useTickets";
 import { TicketListItem } from "@/types/ticket/ticket.type";
+import { useNavigate } from "react-router-dom";
 
 function TicketsPage() {
   // 1. Conectamos con el hook de lectura de tickets de la API
@@ -43,6 +44,8 @@ function TicketsPage() {
     setSelectedClienteId,
     setSelectedSucursalId,
   } = useCatalogOptions();
+
+  const navigate = useNavigate();
 
   // Estados locales para filtros en cascada de la empresa seleccionada
   const [selectedEmpresaFilter, setSelectedEmpresaFilter] = useState<
@@ -111,9 +114,7 @@ function TicketsPage() {
   };
 
   const handleOpenChat = (item: TicketItem) => {
-    toast.success(
-      `Abriendo chat operativo para el ticket ${item.codigo_ticket}`,
-    );
+    navigate(`/admin/tickets/${item.id_ticket}`, { state: { ticket: item } });
   };
 
   return (
