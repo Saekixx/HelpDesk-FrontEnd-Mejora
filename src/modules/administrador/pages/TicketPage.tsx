@@ -20,7 +20,6 @@ import {
 } from "@/modules/administrador/components/ticket/TicketsColumns";
 import { useTickets } from "@/hooks/ticket/useTickets";
 import { TicketListItem } from "@/types/ticket/ticket.type";
-import { useNavigate } from "react-router-dom";
 
 function TicketsPage() {
   // 1. Conectamos con el hook de lectura de tickets de la API
@@ -45,15 +44,16 @@ function TicketsPage() {
     setSelectedSucursalId,
   } = useCatalogOptions();
 
-  const navigate = useNavigate();
-
-  // Estados locales para filtros en cascada
+  // Estados locales para filtros en cascada de la empresa seleccionada
   const [selectedEmpresaFilter, setSelectedEmpresaFilter] = useState<
     number | null
   >(null);
   const [selectedSucursalFilter, setSelectedSucursalFilter] = useState<
     number | null
   >(null);
+
+  // Estado local temporal para acumular los filtros antes de presionar el botón "Filtrar"
+  const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({});
 
   useEffect(() => {
     setSelectedClienteId(selectedEmpresaFilter);
@@ -68,13 +68,12 @@ function TicketsPage() {
   // Estado para la pestaña de estado seleccionada
   const [activeTab, setActiveTab] = useState<string>("Todos");
 
-  // Actualizar filtros de estado en el hook cuando cambia la pestaña
+  // Sincronizar la pestaña de estado con los filtros pendientes (o aplicarlo directo si prefieres pestañas inmediatas)
   useEffect(() => {
-    if (activeTab === "Todos") {
-      updateQuery({ estado: undefined });
-    } else {
-      updateQuery({ estado: activeTab });
-    }
+    const estadoValue = activeTab === "Todos" ? undefined : activeTab;
+    // Si cambias de pestaña, puedes decidir si se aplica de inmediato o al dar filtrar.
+    // Aquí lo aplicamos directo al hook ya que son pestañas de acceso rápido:
+    updateQuery({ estado: estadoValue });
   }, [activeTab]);
 
   // 2. Mapeador de TicketListItem de la API al formato TicketItem de la tabla
@@ -89,9 +88,9 @@ function TicketsPage() {
     return {
       id_ticket: String(t.id_ticket),
       codigo_ticket: `#${t.pin}`,
-      prioridad: t.es_software ? "P2 ALTA" : "P1 CRÍTICO", // Mapeo dinámico o por defecto
+      prioridad: t.es_software ? "P2 ALTA" : "P1 CRÍTICO",
       tiempo_o_fecha: t.es_software ? "Software" : "Hardware",
-      solicitante: "Trabajador Sede", // O mapearlo si viene en el backend
+      solicitante: "Trabajador Sede",
       cargo_solicitante: t.area?.nombre || "Área General",
       asunto: t.asunto,
       tipo_equipo: t.equipo?.tipo || "Equipo",
@@ -112,7 +111,9 @@ function TicketsPage() {
   };
 
   const handleOpenChat = (item: TicketItem) => {
-    navigate(`/admin/tickets/${item.id_ticket}`);
+    toast.success(
+      `Abriendo chat operativo para el ticket ${item.codigo_ticket}`,
+    );
   };
 
   return (
@@ -176,7 +177,7 @@ function TicketsPage() {
         />
       </div>
 
-      {/* 4. BARRA DE FILTROS EN CASCADA */}
+      {/* 4. BARRA DE FILTROS EN CASCADA (Sin llamada automática al cambiar selectores) */}
       <TableFiltersBar
         searchPlaceholder="Buscar por PIN, asunto o detalle del ticket..."
         dropdowns={[
@@ -198,27 +199,46 @@ function TicketsPage() {
         ]}
         initialValues={queryParams}
         onFilterChange={(key, value) => {
+          // Solo guardamos de manera local temporalmente los cambios en los selects
           if (key === "id_cliente") {
             const clienteId = value && value !== "all" ? Number(value) : null;
             setSelectedEmpresaFilter(clienteId);
-            updateQuery({ id_cliente: clienteId });
           } else if (key === "id_sucursal") {
             const sucursalId = value && value !== "all" ? Number(value) : null;
             setSelectedSucursalFilter(sucursalId);
-            updateQuery({ id_sucursal: sucursalId });
-          } else if (key === "id_area") {
-            const areaId = value && value !== "all" ? Number(value) : null;
-            updateQuery({ id_area: areaId });
           }
+          setPendingFilters((prev) => ({ ...prev, [key]: value }));
         }}
         onApplyFilters={(filters) => {
-          updateQuery(filters);
+          // AQUÍ ES DONDE REALMENTE SE APLICA LA BÚSQUEDA AL PRESIONAR EL BOTÓN FILTRAR
+          const formattedFilters: Record<string, any> = {};
+
+          Object.entries(filters).forEach(([key, val]) => {
+            if (
+              val !== undefined &&
+              val !== null &&
+              val !== "all" &&
+              val !== ""
+            ) {
+              if (["id_cliente", "id_sucursal", "id_area"].includes(key)) {
+                formattedFilters[key] = Number(val);
+              } else {
+                formattedFilters[key] = val;
+              }
+            } else {
+              formattedFilters[key] = undefined;
+            }
+          });
+
+          updateQuery(formattedFilters);
           toast.success("Filtros aplicados correctamente");
         }}
         onResetFilters={() => {
           setSelectedEmpresaFilter(null);
           setSelectedSucursalFilter(null);
+          setPendingFilters({});
           resetQuery();
+          toast.info("Filtros restablecidos");
         }}
       />
 

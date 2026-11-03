@@ -2,20 +2,7 @@ import { ColumnDef } from "@/types/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Edit, Power, Cpu, HardDrive, Zap, Server } from "lucide-react";
-
-export interface HardwareItem {
-  id_hardware: string;
-  serial: string;
-  codigo_interno: string;
-  tipo: string;
-  subtipo?: string;
-  marca_modelo: string;
-  sku: string;
-  proveedor: string;
-  fecha_compra: string;
-  estado: "Instalado" | "Disponible" | "En Mantenimiento" | "Baja";
-  ubicacion_o_equipo: string;
-}
+import { HardwareItem } from "@/types/hardware/hardware.types";
 
 interface HardwareColumnsProps {
   onViewDetail: (item: HardwareItem) => void;
@@ -23,29 +10,29 @@ interface HardwareColumnsProps {
   onToggleStatus: (item: HardwareItem) => void;
 }
 
-// Icono según el tipo de componente físico
+// Icono según el tipo de componente físico devuelto por la API
 const getHardwareIcon = (tipo: string) => {
   if (tipo.includes("RAM"))
     return <Cpu className="h-4 w-4 text-blue-500 shrink-0" />;
-  if (tipo.includes("SSD") || tipo.includes("HDD"))
+  if (tipo.includes("ALMACENAMIENTO"))
     return <HardDrive className="h-4 w-4 text-orange-500 shrink-0" />;
-  if (tipo.includes("Fuente"))
+  if (tipo.includes("FUENTE"))
     return <Zap className="h-4 w-4 text-amber-500 shrink-0" />;
-  if (tipo.includes("Core") || tipo.includes("CPU"))
+  if (tipo.includes("PROCESADOR"))
     return <Cpu className="h-4 w-4 text-indigo-500 shrink-0" />;
   return <Server className="h-4 w-4 text-slate-500 shrink-0" />;
 };
 
-// Estilos de Badge personalizados según el estado
+// Estilos de Badge personalizados según el estado del backend (INSTALADO, DISPONIBLE, etc.)
 const getEstadoBadgeStyle = (estado: string) => {
   switch (estado) {
-    case "Instalado":
+    case "INSTALADO":
       return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "Disponible":
+    case "DISPONIBLE":
       return "bg-blue-50 text-blue-700 border-blue-200";
-    case "En Mantenimiento":
+    case "EN_MANTENIMIENTO":
       return "bg-amber-50 text-amber-700 border-amber-200";
-    case "Baja":
+    case "BAJA":
       return "bg-red-50 text-red-700 border-red-200";
     default:
       return "bg-slate-50 text-slate-700 border-slate-200";
@@ -54,13 +41,13 @@ const getEstadoBadgeStyle = (estado: string) => {
 
 const getDotColor = (estado: string) => {
   switch (estado) {
-    case "Instalado":
+    case "INSTALADO":
       return "bg-emerald-500";
-    case "Disponible":
+    case "DISPONIBLE":
       return "bg-blue-500";
-    case "En Mantenimiento":
+    case "EN_MANTENIMIENTO":
       return "bg-amber-500";
-    case "Baja":
+    case "BAJA":
       return "bg-red-500";
     default:
       return "bg-slate-400";
@@ -73,32 +60,29 @@ export const getHardwareColumns = ({
   onToggleStatus,
 }: HardwareColumnsProps): ColumnDef<HardwareItem>[] => [
   {
-    key: "serial",
-    header: "ID / SERIE",
+    key: "numero_serie",
+    header: "NÚMERO DE SERIE",
     render: (item) => (
       <div className="space-y-0.5">
         <span className="font-bold text-slate-900 text-xs block">
-          {item.serial}
+          {item.numero_serie}
         </span>
         <span className="text-[11px] text-slate-400 font-medium block">
-          {item.codigo_interno}
+          ID: #{item.id_hardware}
         </span>
       </div>
     ),
   },
   {
-    key: "tipo",
-    header: "TIPO",
+    key: "tipo_componente",
+    header: "TIPO DE COMPONENTE",
     render: (item) => (
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200/60 text-slate-700 text-xs font-semibold min-w-[130px]">
-        {getHardwareIcon(item.tipo)}
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200/60 text-slate-700 text-xs font-semibold min-w-[150px]">
+        {getHardwareIcon(item.tipo_componente)}
         <div className="flex flex-col leading-tight">
-          <span className="font-bold text-slate-800">{item.tipo}</span>
-          {item.subtipo && (
-            <span className="text-[10px] text-slate-500 font-medium">
-              {item.subtipo}
-            </span>
-          )}
+          <span className="font-bold text-slate-800">
+            {item.tipo_componente_label}
+          </span>
         </div>
       </div>
     ),
@@ -112,7 +96,7 @@ export const getHardwareColumns = ({
           {item.marca_modelo}
         </span>
         <span className="text-[11px] text-slate-400 font-mono block">
-          {item.sku}
+          Costo: S/. {item.costo_unitario ?? 0}
         </span>
       </div>
     ),
@@ -122,7 +106,7 @@ export const getHardwareColumns = ({
     header: "PROVEEDOR",
     render: (item) => (
       <span className="text-xs font-medium text-slate-600">
-        {item.proveedor}
+        {item.proveedor || "N/A"}
       </span>
     ),
   },
@@ -131,7 +115,9 @@ export const getHardwareColumns = ({
     header: "FECHA COMPRA",
     render: (item) => (
       <span className="text-xs font-medium text-slate-600">
-        {item.fecha_compra}
+        {item.fecha_compra
+          ? new Date(item.fecha_compra).toLocaleDateString()
+          : "N/A"}
       </span>
     ),
   },
@@ -147,10 +133,12 @@ export const getHardwareColumns = ({
           <span
             className={`w-1.5 h-1.5 rounded-full ${getDotColor(item.estado)}`}
           />
-          {item.estado}
+          {item.estado_label}
         </Badge>
         <span className="text-[11px] text-slate-400 font-medium block truncate max-w-[160px]">
-          {item.ubicacion_o_equipo}
+          {item.equipo_actual
+            ? `Equipo: ${item.equipo_actual.nombre_equipo}`
+            : "Sin equipo asignado"}
         </span>
       </div>
     ),

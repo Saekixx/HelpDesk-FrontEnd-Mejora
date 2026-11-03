@@ -8,114 +8,26 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
+import { useSoftware } from "@/hooks/software/useSoftware";
 import {
   getSoftwareColumns,
   SoftwareItem,
 } from "../components/software/SoftwareColumns";
-
-// DATA MOCKEADA INICIAL DE SOFTWARE Y LICENCIAS
-const MOCK_SOFTWARE_DATA: SoftwareItem[] = [
-  {
-    id_software: "1",
-    nombre_software: "Microsoft 365 Enterprise E5",
-    categoria: "Suite Ofimática & Productividad",
-    empresa_cliente: "Banco Metrópolis S.A.",
-    tipo_modelo: "Por Asiento (SSD)",
-    usados: 45,
-    total_cupos: 50,
-    libres: 5,
-    porcentaje: 90,
-    proveedor: "SoftwareOne Latam",
-    vigencia: "31/12/2026",
-    estado: "Activo",
-  },
-  {
-    id_software: "2",
-    nombre_software: "Windows 11 Pro Enterprise OEM",
-    categoria: "Sistema Operativo",
-    empresa_cliente: "Todas las Empresas (Pool)",
-    tipo_modelo: "OEM Endpoint",
-    usados: 120,
-    total_cupos: 130,
-    libres: 10,
-    porcentaje: 92,
-    proveedor: "Deltron Perú S.A.",
-    vigencia: "Permanente (Perpetua)",
-    estado: "Activo",
-  },
-  {
-    id_software: "3",
-    nombre_software: "CrowdStrike Falcon Enterprise",
-    categoria: "Seguridad Endpoint & EDR",
-    empresa_cliente: "Banco Metrópolis S.A.",
-    tipo_modelo: "Flotante Corporativa",
-    usados: 78,
-    total_cupos: 80,
-    libres: 2,
-    porcentaje: 97,
-    proveedor: "Licencias Globales",
-    vigencia: "18/06/2026",
-    estado: "Activo",
-  },
-  {
-    id_software: "4",
-    nombre_software: "Adobe Creative Cloud Pro",
-    categoria: "Diseño Gráfico & Vídeo",
-    empresa_cliente: "Milan Jeans S.A.C",
-    tipo_modelo: "Por Usuario Nominativo",
-    usados: 18,
-    total_cupos: 20,
-    libres: 2,
-    porcentaje: 90,
-    proveedor: "TechData Solutions",
-    vigencia: "15/10/2025",
-    estado: "Próximo a vencer",
-  },
-  {
-    id_software: "5",
-    nombre_software: "Redgate SQL Prompt & Toolbelt",
-    categoria: "Bases de Datos & Dev",
-    empresa_cliente: "Logística Transandina",
-    tipo_modelo: "Empresarial Ilimitada",
-    usados: 32,
-    total_cupos: 35,
-    libres: 3,
-    porcentaje: 91,
-    proveedor: "SoftwareOne Latam",
-    vigencia: "28/02/2026",
-    estado: "Activo",
-  },
-  {
-    id_software: "6",
-    nombre_software: "JetBrains All Products Pack",
-    categoria: "Desarrollo & IDEs",
-    empresa_cliente: "Banco Metrópolis S.A.",
-    tipo_modelo: "Por Usuario",
-    usados: 15,
-    total_cupos: 25,
-    libres: 10,
-    porcentaje: 60,
-    proveedor: "TechData Solutions",
-    vigencia: "12/09/2025",
-    estado: "Activo",
-  },
-  {
-    id_software: "7",
-    nombre_software: "Autodesk AutoCAD 2024",
-    categoria: "Ingeniería & Arquitectura",
-    empresa_cliente: "Constructora Bolívar",
-    tipo_modelo: "Pool Licencias Red",
-    usados: 8,
-    total_cupos: 8,
-    libres: 0,
-    porcentaje: 100,
-    proveedor: "Graña Tech",
-    vigencia: "15/07/2025",
-    estado: "Cupo Lieno",
-  },
-];
+import { SoftwareItem as SoftwareBackendItem } from "@/types/software/software.type";
 
 function SoftwarePage() {
+  const {
+    softwareList,
+    meta,
+    isLoading,
+    queryParams,
+    limit,
+    updateQuery,
+    setPage,
+    setLimit,
+    resetQuery,
+  } = useSoftware();
+
   // Catálogos globales en cascada (Clientes -> Sucursales)
   const { clientes, sucursales, setSelectedClienteId } = useCatalogOptions();
 
@@ -128,27 +40,50 @@ function SoftwarePage() {
     setSelectedClienteId(selectedEmpresaFilter);
   }, [selectedEmpresaFilter, setSelectedClienteId]);
 
-  // Estados para tabla y paginación
-  const [data] = useState<SoftwareItem[]>(MOCK_SOFTWARE_DATA);
-  const [isLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [queryParams, setQueryParams] = useState<Record<string, any>>({});
+  // Estado local temporal para acumular filtros antes de hacer clic en "Filtrar"
+  const [, setPendingFilters] = useState<Record<string, any>>({});
 
-  // Opciones estáticas para los filtros
-  const categoriasOptions = [
-    { label: "Suite Ofimática & Productividad", value: "ofimatica" },
-    { label: "Sistema Operativo", value: "so" },
-    { label: "Seguridad Endpoint & EDR", value: "seguridad" },
-    { label: "Diseño Gráfico & Vídeo", value: "diseno" },
-    { label: "Bases de Datos & Dev", value: "db" },
-  ];
-
+  // Opciones estáticas permitidas para los filtros del backend
   const estadosOptions = [
     { label: "Activo", value: "Activo" },
-    { label: "Próximo a vencer", value: "Proximo a vencer" },
-    { label: "Cupo Lleno", value: "Cupo Lieno" },
+    { label: "Suspendido", value: "Suspendido" },
+    { label: "Caducado", value: "Caducado" },
+    { label: "Inactivo", value: "Inactivo" },
   ];
+
+  // 3. Mapeador de los datos de la API (SoftwareBackendItem) al formato que espera la tabla (SoftwareItem)
+  const mappedSoftware: SoftwareItem[] = softwareList.map(
+    (s: SoftwareBackendItem) => {
+      const usados = s.licencias_usadas ?? 0;
+      const total = s.limite_equipos ?? 1;
+      const porcentaje = Math.round((usados / total) * 100);
+      const libres = Math.max(0, total - usados);
+
+      let estadoVisual: "Activo" | "Próximo a vencer" | "Cupo Lieno" = "Activo";
+      if (usados >= total) {
+        estadoVisual = "Cupo Lieno";
+      } else if (s.estado === "Caducado" || s.estado === "Suspendido") {
+        estadoVisual = "Próximo a vencer";
+      }
+
+      return {
+        id_software: String(s.id_software),
+        nombre_software: s.nombre_software,
+        categoria: s.categoria || "General",
+        empresa_cliente: `Cliente ID: ${s.id_cliente || "Global"}`,
+        tipo_modelo: s.tipo_licencia || "Pool Limitado",
+        usados: usados,
+        total_cupos: total,
+        libres: libres,
+        porcentaje: porcentaje,
+        proveedor: s.proveedor || "N/A",
+        vigencia: s.fecha_caducidad
+          ? new Date(s.fecha_caducidad).toLocaleDateString()
+          : "Permanente",
+        estado: estadoVisual,
+      };
+    },
+  );
 
   const handleViewDetail = (item: SoftwareItem) => {
     toast.info(`Ver detalle de licenciamiento: ${item.nombre_software}`);
@@ -168,14 +103,6 @@ function SoftwarePage() {
     toast.success(
       "Modal de 'Registrar Nuevo Software / Lote' en desarrollo...",
     );
-  };
-
-  // Metadatos de paginación limpios
-  const meta = {
-    total: 42,
-    page: page,
-    lastPage: 6,
-    limit: limit,
   };
 
   return (
@@ -221,28 +148,33 @@ function SoftwarePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           title="TOTAL PROGRAMAS / LOTES"
-          value="42"
+          value={String(meta.total)}
           icon={<Layers className="h-5 w-5 text-orange-600" />}
           iconContainerClassName="bg-orange-50 text-orange-600"
           footerText="Inventario global auditado"
         />
         <StatCard
           title="LICENCIAS ASIGNADAS"
-          value="380"
+          value={String(
+            softwareList.reduce(
+              (acc, curr) => acc + (curr.licencias_usadas || 0),
+              0,
+            ),
+          )}
           icon={<FileCheck className="h-5 w-5 text-blue-600" />}
           iconContainerClassName="bg-blue-50 text-blue-600"
-          footerText="84.4% ocupación (380/450)"
+          footerText="Ocupación actual en equipos"
         />
         <StatCard
-          title="LICENCIAS LIBRES"
-          value="70"
+          title="LOTES ACTIVOS"
+          value={String(softwareList.filter((s) => s.is_active).length)}
           icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
           iconContainerClassName="bg-emerald-50 text-emerald-600"
-          footerText="Stock en pool para despliegue"
+          footerText="Disponibles en plataforma"
         />
       </div>
 
-      {/* 3. BARRA DE FILTROS EN CASCADA */}
+      {/* 3. BARRA DE FILTROS (Aplicando acumulación local hasta dar click en Filtrar) */}
       <TableFiltersBar
         searchPlaceholder="Buscar por Software, SKU, Proveedor o Categoría..."
         dropdowns={[
@@ -257,11 +189,6 @@ function SoftwarePage() {
             options: sucursales,
           },
           {
-            key: "categoria",
-            placeholder: "Todas las Categorías",
-            options: categoriasOptions,
-          },
-          {
             key: "estado",
             placeholder: "Todos los Estados",
             options: estadosOptions,
@@ -273,20 +200,42 @@ function SoftwarePage() {
             const clienteId = value && value !== "all" ? Number(value) : null;
             setSelectedEmpresaFilter(clienteId);
           }
+          setPendingFilters((prev) => ({ ...prev, [key]: value }));
         }}
         onApplyFilters={(filters) => {
-          setQueryParams(filters);
+          const formattedFilters: Record<string, any> = {};
+
+          Object.entries(filters).forEach(([key, val]) => {
+            if (
+              val !== undefined &&
+              val !== null &&
+              val !== "all" &&
+              val !== ""
+            ) {
+              if (["id_cliente", "id_sucursal"].includes(key)) {
+                formattedFilters[key] = Number(val);
+              } else {
+                formattedFilters[key] = val;
+              }
+            } else {
+              formattedFilters[key] = undefined;
+            }
+          });
+
+          updateQuery(formattedFilters);
           toast.success("Filtros aplicados correctamente");
         }}
         onResetFilters={() => {
           setSelectedEmpresaFilter(null);
-          setQueryParams({});
+          setPendingFilters({});
+          resetQuery();
+          toast.info("Filtros restablecidos");
         }}
       />
 
-      {/* 4. TABLA DE DATOS */}
+      {/* 4. TABLA DE DATOS CONECTADA AL HOOK REAL */}
       <DataTableContainer
-        data={data}
+        data={mappedSoftware}
         columns={getSoftwareColumns({
           onViewDetail: handleViewDetail,
           onEdit: handleEdit,
@@ -298,7 +247,11 @@ function SoftwarePage() {
 
       {/* 5. PAGINACIÓN */}
       <TablePaginationBar
-        meta={meta}
+        meta={{
+          total: meta.total,
+          page: meta.page,
+          lastPage: meta.lastPage,
+        }}
         pageSize={limit}
         onPageChange={setPage}
         onPageSizeChange={setLimit}

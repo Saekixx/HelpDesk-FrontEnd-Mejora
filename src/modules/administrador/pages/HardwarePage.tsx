@@ -15,95 +15,25 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
-import {
-  getHardwareColumns,
-  HardwareItem,
-} from "../components/hardware/HardwareColumns";
-
-// DATA MOCKEADA INICIAL PARA LA VISTA
-const MOCK_HARDWARE_DATA: HardwareItem[] = [
-  {
-    id_hardware: "1",
-    serial: "SN-KF5600-88421",
-    codigo_interno: "#HW-1049",
-    tipo: "RAM",
-    subtipo: "DDR5",
-    marca_modelo: "Kingston Fury Beast 16GB DDR5 5600MHz",
-    sku: "SKU: KF556C40BB-16",
-    proveedor: "TechSupply Corp Latam",
-    fecha_compra: "18/05/2024",
-    estado: "Instalado",
-    ubicacion_o_equipo: "PC-CONTAB-01",
-  },
-  {
-    id_hardware: "2",
-    serial: "SN-SM980P-44012",
-    codigo_interno: "#HW-1050",
-    tipo: "SSD",
-    subtipo: "NVMe M.2",
-    marca_modelo: "Samsung 980 Pro 1TB NVMe PCIe 4.0",
-    sku: "SKU: MZ-V8P1T0B/AM",
-    proveedor: "Deltron Perú S.A.",
-    fecha_compra: "12/03/2024",
-    estado: "Disponible",
-    ubicacion_o_equipo: "Almacén Central",
-  },
-  {
-    id_hardware: "3",
-    serial: "SN-CS750E-10092",
-    codigo_interno: "#HW-1051",
-    tipo: "Fuente",
-    subtipo: "750W",
-    marca_modelo: "Corsair RM750e 750W 80+ Gold Fully Mod",
-    sku: "SKU: CP-9020262-NA",
-    proveedor: "Memory Kings Wholesale",
-    fecha_compra: "04/01/2024",
-    estado: "En Mantenimiento",
-    ubicacion_o_equipo: "Taller RMA (Garantía)",
-  },
-  {
-    id_hardware: "4",
-    serial: "SN-IN137K-99214",
-    codigo_interno: "#HW-1052",
-    tipo: "Core i7",
-    subtipo: "(CPU)",
-    marca_modelo: "Intel Core i7-13700K 16-Core 5.4GHz",
-    sku: "SKU: BX8071513700K",
-    proveedor: "Ingram Micro Latam",
-    fecha_compra: "22/11/2023",
-    estado: "Instalado",
-    ubicacion_o_equipo: "SRV-PROD-02",
-  },
-  {
-    id_hardware: "5",
-    serial: "SN-CRU32D-31880",
-    codigo_interno: "#HW-1053",
-    tipo: "RAM",
-    subtipo: "DDR4",
-    marca_modelo: "Crucial Pro 32GB (2×16GB) DDR4 3200MHz",
-    sku: "SKU: CP2K16G4DRA32A",
-    proveedor: "Deltron Perú S.A.",
-    fecha_compra: "15/09/2023",
-    estado: "Disponible",
-    ubicacion_o_equipo: "Bodega Sede Norte",
-  },
-  {
-    id_hardware: "6",
-    serial: "SN-WD40E-55201",
-    codigo_interno: "#HW-1054",
-    tipo: "HDD",
-    subtipo: "NAS 4TB",
-    marca_modelo: "Western Digital Red Plus 4TB SATA 3.5",
-    sku: "SKU: WD40EFPX",
-    proveedor: "TechSupply Corp Latam",
-    fecha_compra: "29/08/2023",
-    estado: "Baja",
-    ubicacion_o_equipo: "Retiro Definitivo (Sectores Dañados)",
-  },
-];
+import { useHardware } from "@/hooks/hardware/useHardware";
+import { HardwareItem } from "@/types/hardware/hardware.types";
+import { getHardwareColumns } from "../components/hardware/HardwareColumns";
 
 function HardwarePage() {
-  // Catálogos globales en cascada (Clientes -> Sucursales -> Áreas)
+  // 1. Hook de lectura y paginación de Hardware conectado al backend
+  const {
+    hardwareList,
+    meta,
+    isLoading,
+    queryParams,
+    limit,
+    updateQuery,
+    setPage,
+    setLimit,
+    resetQuery,
+  } = useHardware();
+
+  // 2. Catálogos globales en cascada (Clientes -> Sucursales -> Áreas)
   const {
     clientes,
     sucursales,
@@ -120,10 +50,12 @@ function HardwarePage() {
     number | null
   >(null);
 
+  // Estado local temporal para acumular los filtros antes de presionar el botón "Filtrar"
+  const [, setPendingFilters] = useState<Record<string, any>>({});
+
   // Sincronizar Empresa seleccionada con el hook de catálogos
   useEffect(() => {
     setSelectedClienteId(selectedEmpresaFilter);
-    // Limpiar sucursal y área si se cambia de empresa
     setSelectedSucursalFilter(null);
     setSelectedSucursalId(null);
   }, [selectedEmpresaFilter, setSelectedClienteId, setSelectedSucursalId]);
@@ -133,76 +65,36 @@ function HardwarePage() {
     setSelectedSucursalId(selectedSucursalFilter);
   }, [selectedSucursalFilter, setSelectedSucursalId]);
 
-  // Estados locales para la tabla y paginación
-  const [data] = useState<HardwareItem[]>(MOCK_HARDWARE_DATA);
-  const [isLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [queryParams, setQueryParams] = useState<Record<string, any>>({});
-
-  // Estados para controlar el modal de Creación / Edición
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedHardwareToEdit, setSelectedHardwareToEdit] =
-    useState<HardwareItem | null>(null);
-
-  // Opciones estáticas para los filtros
-  const tiposHardwareOptions = [
-    { label: "Memoria RAM", value: "RAM" },
-    { label: "Almacenamiento SSD/NVMe", value: "SSD" },
-    { label: "Almacenamiento HDD", value: "HDD" },
-    { label: "Fuente de Poder (PSU)", value: "Fuente" },
-    { label: "Procesador (CPU)", value: "CPU" },
-    { label: "Tarjeta Gráfica (GPU)", value: "GPU" },
-    { label: "Placa Base", value: "Placa" },
-  ];
-
+  // Opciones estáticas permitidas para el filtro de estado del hardware
   const estadosHardwareOptions = [
-    { label: "Instalado", value: "Instalado" },
-    { label: "Disponible", value: "Disponible" },
-    { label: "En Mantenimiento", value: "En Mantenimiento" },
-    { label: "Baja / Descarte", value: "Baja" },
+    { label: "Instalado", value: "INSTALADO" },
+    { label: "Disponible", value: "DISPONIBLE" },
+    { label: "En Mantenimiento", value: "EN_MANTENIMIENTO" },
+    { label: "Baja / Descarte", value: "BAJA" },
   ];
 
-  const proveedoresOptions = [
-    { label: "TechSupply Corp Latam", value: "TechSupply Corp Latam" },
-    { label: "Deltron Perú S.A.", value: "Deltron Perú S.A." },
-    { label: "Memory Kings Wholesale", value: "Memory Kings Wholesale" },
-    { label: "Ingram Micro Latam", value: "Ingram Micro Latam" },
-  ];
-
-  // Abrir modal para CREAR
+  // Acciones de UI
   const handleOpenCreate = () => {
-    setSelectedHardwareToEdit(null);
-    setIsModalOpen(true);
+    toast.info("Modal de creación de hardware en desarrollo...");
   };
 
   const handleViewDetail = (item: HardwareItem) => {
     toast.info(
-      `Ver detalle de hardware: ${item.serial} (${item.marca_modelo})`,
+      `Ver detalle de hardware ID: ${item.id_hardware} (${item.numero_serie})`,
     );
   };
 
-  // Abrir modal para EDITAR
   const handleEdit = (item: HardwareItem) => {
-    setSelectedHardwareToEdit(item);
-    setIsModalOpen(true);
+    toast.info(`Editar componente ID: ${item.id_hardware}`);
   };
 
   const handleToggleStatus = (item: HardwareItem) => {
-    toast.warning(`Gestionar estado o baja para: ${item.serial}`);
-  };
-
-  // Metadatos de paginación limpios
-  const meta = {
-    total: MOCK_HARDWARE_DATA.length,
-    page: page,
-    lastPage: 1,
-    limit: limit,
+    toast.warning(`Gestionar estado o baja para: ${item.numero_serie}`);
   };
 
   return (
     <div className="p-6 bg-slate-50/50 min-h-screen space-y-4">
-      {/* 1. CABECERA */}
+      {/* CABECERA */}
       <PageHeader
         category="MÓDULOS DE GESTIÓN > INVENTARIO DE HARDWARE"
         title={
@@ -214,7 +106,7 @@ function HardwarePage() {
             </span>
           </div>
         }
-        description="Catálogo de componentes físicos (Discos, RAM, Fuentes, etc.), proveedores y control de stock."
+        description="Catálogo de componentes físicos conectados al backend, proveedores y control de stock."
         actions={
           <div className="flex items-center gap-2.5">
             <Button
@@ -239,7 +131,7 @@ function HardwarePage() {
         }
       />
 
-      {/* 2. MÉTRICAS */}
+      {/* MÉTRICAS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           title="TOTAL COMPONENTES"
@@ -249,27 +141,35 @@ function HardwarePage() {
         />
         <StatCard
           title="ASIGNADOS A EQUIPOS"
-          value="2"
+          value={String(
+            hardwareList.filter((h) => h.estado === "INSTALADO").length,
+          )}
           icon={<HardDrive className="h-5 w-5 text-blue-600" />}
           iconContainerClassName="bg-blue-50 text-blue-600"
         />
         <StatCard
-          title="EN STOCK / REPUESTOS"
-          value="2"
+          title="EN STOCK / DISPONIBLES"
+          value={String(
+            hardwareList.filter((h) => h.estado === "DISPONIBLE").length,
+          )}
           icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
           iconContainerClassName="bg-emerald-50 text-emerald-600"
         />
         <StatCard
-          title="EN BAJA / DAÑADOS"
-          value="1"
+          title="EN MANTENIMIENTO / BAJA"
+          value={String(
+            hardwareList.filter(
+              (h) => h.estado === "EN_MANTENIMIENTO" || h.estado === "BAJA",
+            ).length,
+          )}
           icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
           iconContainerClassName="bg-red-50 text-red-600"
         />
       </div>
 
-      {/* 3. FILTROS CON CASCADA (Empresa -> Sucursal -> Área) */}
+      {/* FILTROS (Acumulados localmente hasta hacer clic en "Filtrar") */}
       <TableFiltersBar
-        searchPlaceholder="Buscar por Nº Serie, Marca/Modelo o Proveedor..."
+        searchPlaceholder="Buscar por Nº Serie, Marca/Modelo, Tipo o Proveedor..."
         dropdowns={[
           {
             key: "id_cliente",
@@ -284,22 +184,12 @@ function HardwarePage() {
           {
             key: "id_area",
             placeholder: "Área: Todas",
-            options: areas, // Áreas filtradas dinámicamente según la sucursal seleccionada
-          },
-          {
-            key: "tipo",
-            placeholder: "Tipo: Todos",
-            options: tiposHardwareOptions,
+            options: areas,
           },
           {
             key: "estado",
             placeholder: "Estado: Todos",
             options: estadosHardwareOptions,
-          },
-          {
-            key: "proveedor",
-            placeholder: "Proveedor: Todos",
-            options: proveedoresOptions,
           },
         ]}
         initialValues={queryParams}
@@ -311,33 +201,61 @@ function HardwarePage() {
             const sucursalId = value && value !== "all" ? Number(value) : null;
             setSelectedSucursalFilter(sucursalId);
           }
+          // Solo actualizamos de forma temporal los filtros pendientes sin disparar la API aún
+          setPendingFilters((prev) => ({ ...prev, [key]: value }));
         }}
         onApplyFilters={(filters) => {
-          setQueryParams(filters);
-          toast.success("Filtros aplicados");
+          // AQUÍ SE DISPARA LA PETICIÓN AL BACKEND AL PRESIONAR EL BOTÓN FILTRAR
+          const formattedFilters: Record<string, any> = {};
+
+          Object.entries(filters).forEach(([key, val]) => {
+            if (
+              val !== undefined &&
+              val !== null &&
+              val !== "all" &&
+              val !== ""
+            ) {
+              if (["id_cliente", "id_sucursal", "id_area"].includes(key)) {
+                formattedFilters[key] = Number(val);
+              } else {
+                formattedFilters[key] = val;
+              }
+            } else {
+              formattedFilters[key] = undefined;
+            }
+          });
+
+          updateQuery(formattedFilters);
+          toast.success("Filtros aplicados correctamente");
         }}
         onResetFilters={() => {
           setSelectedEmpresaFilter(null);
           setSelectedSucursalFilter(null);
-          setQueryParams({});
+          setPendingFilters({});
+          resetQuery();
+          toast.info("Filtros restablecidos");
         }}
       />
 
-      {/* 4. TABLA */}
+      {/* TABLA CONECTADA AL BACKEND */}
       <DataTableContainer
-        data={data}
+        data={hardwareList}
         columns={getHardwareColumns({
           onViewDetail: handleViewDetail,
           onEdit: handleEdit,
           onToggleStatus: handleToggleStatus,
         })}
-        keyExtractor={(item) => item.id_hardware}
+        keyExtractor={(item) => String(item.id_hardware)}
         isLoading={isLoading}
       />
 
-      {/* 5. PAGINACIÓN */}
+      {/* PAGINACIÓN */}
       <TablePaginationBar
-        meta={meta}
+        meta={{
+          total: meta.total,
+          page: meta.page,
+          lastPage: meta.lastPage,
+        }}
         pageSize={limit}
         onPageChange={setPage}
         onPageSizeChange={setLimit}
