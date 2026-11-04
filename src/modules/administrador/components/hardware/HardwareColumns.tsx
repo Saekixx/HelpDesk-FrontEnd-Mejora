@@ -1,13 +1,21 @@
 import { ColumnDef } from "@/types/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Power, Cpu, HardDrive, Zap, Server } from "lucide-react";
+import {
+  Eye,
+  Edit,
+  Cpu,
+  HardDrive,
+  Zap,
+  Server,
+  ArrowRightLeft,
+} from "lucide-react";
 import { HardwareItem } from "@/types/hardware/hardware.types";
 
 interface HardwareColumnsProps {
   onViewDetail: (item: HardwareItem) => void;
   onEdit: (item: HardwareItem) => void;
-  onToggleStatus: (item: HardwareItem) => void;
+  onToggleStatus: (item: HardwareItem) => void; // Abre el modal de transición
 }
 
 // Icono según el tipo de componente físico devuelto por la API
@@ -23,7 +31,7 @@ const getHardwareIcon = (tipo: string) => {
   return <Server className="h-4 w-4 text-slate-500 shrink-0" />;
 };
 
-// Estilos de Badge personalizados según el estado del backend (INSTALADO, DISPONIBLE, etc.)
+// Estilos de Badge personalizados según el estado del backend
 const getEstadoBadgeStyle = (estado: string) => {
   switch (estado) {
     case "INSTALADO":
@@ -116,7 +124,9 @@ export const getHardwareColumns = ({
     render: (item) => (
       <span className="text-xs font-medium text-slate-600">
         {item.fecha_compra
-          ? new Date(item.fecha_compra).toLocaleDateString()
+          ? new Date(item.fecha_compra).toLocaleDateString("es-ES", {
+              timeZone: "UTC",
+            })
           : "N/A"}
       </span>
     ),
@@ -167,14 +177,15 @@ export const getHardwareColumns = ({
         >
           <Edit className="h-4 w-4" />
         </Button>
+        {/* Ícono para abrir el Modal de Transición de Estado / Asignación */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
-          title="Cambiar Estado / Baja"
+          className="h-8 w-8 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg cursor-pointer"
+          title="Transición de Estado / Instalar"
           onClick={() => onToggleStatus(item)}
         >
-          <Power className="h-4 w-4" />
+          <ArrowRightLeft className="h-4 w-4" />
         </Button>
       </div>
     ),

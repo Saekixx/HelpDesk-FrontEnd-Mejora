@@ -10,6 +10,7 @@ import {
   getTrabajadoresOptions,
   GetTrabajadoresOptionsParams,
   getZonasOptions,
+  getEquiposOptions,
 } from "../services/catalog.service";
 
 export const useCatalogOptions = () => {
@@ -22,6 +23,7 @@ export const useCatalogOptions = () => {
   const [trabajadores, setTrabajadores] = useState<SelectOption<number>[]>([]);
   const [soportes, setSoportes] = useState<SelectOption<number>[]>([]);
   const [zonas, setZonas] = useState<SelectOption<number>[]>([]);
+  const [equipos, setEquipos] = useState<SelectOption<number>[]>([]);
 
   // Estados para controlar las dependencias en cascada
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(
@@ -42,6 +44,7 @@ export const useCatalogOptions = () => {
     useState<boolean>(false);
   const [loadingSoportes, setLoadingSoportes] = useState<boolean>(false);
   const [loadingZonas, setLoadingZonas] = useState<boolean>(false);
+  const [loadingEquipos, setLoadingEquipos] = useState<boolean>(false);
 
   // 1. Cargar catálogos independientes al montar (Roles, Clientes y Planes)
   useEffect(() => {
@@ -208,7 +211,39 @@ export const useCatalogOptions = () => {
     [],
   );
 
-  // 5. Cargar zonas
+  // 6. Cargar equipos en cascada cuando cambia el área seleccionada
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!selectedAreaId) {
+      setEquipos([]);
+      return;
+    }
+
+    const fetchEquipos = async () => {
+      setLoadingEquipos(true);
+      try {
+        const data = await getEquiposOptions(selectedAreaId);
+        if (isMounted) {
+          setEquipos(data || []);
+        }
+      } catch (error) {
+        console.error("Error al cargar equipos", error);
+      } finally {
+        if (isMounted) {
+          setLoadingEquipos(false);
+        }
+      }
+    };
+
+    fetchEquipos();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedAreaId]);
+
+  // 7. Cargar zonas
   useEffect(() => {
     let isMounted = true;
 
@@ -245,6 +280,7 @@ export const useCatalogOptions = () => {
       trabajadores: loadingTrabajadores,
       soportes: loadingSoportes,
       zonas: loadingZonas,
+      equipos: loadingEquipos,
     }),
     [
       loadingRoles,
@@ -255,6 +291,7 @@ export const useCatalogOptions = () => {
       loadingTrabajadores,
       loadingSoportes,
       loadingZonas,
+      loadingEquipos,
     ],
   );
 
@@ -268,6 +305,7 @@ export const useCatalogOptions = () => {
     trabajadores,
     soportes,
     zonas,
+    equipos,
 
     // Métodos para cargar u obtener datos específicos
     getSoportesOptions,

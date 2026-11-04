@@ -1,17 +1,26 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  getHardwareList,
   getHardwareById,
+  getHardwareList,
 } from "@/services/hardware/hardware.service";
 import {
-  HardwareItem,
   GetHardwareParams,
+  HardwareDetailResponse,
+  HardwareItem,
 } from "@/types/hardware/hardware.types";
 
-export const useHardware = () => {
+interface UseHardwareOptions {
+  initialParams?: GetHardwareParams;
+}
+
+/**
+ * Hook para la tabla y listado paginado de Hardware
+ */
+export const useHardware = (options?: UseHardwareOptions) => {
   const [queryParams, setQueryParams] = useState<GetHardwareParams>({
     page: 1,
     limit: 10,
+    ...(options?.initialParams || {}),
   });
 
   const [hardwareList, setHardwareList] = useState<HardwareItem[]>([]);
@@ -24,22 +33,18 @@ export const useHardware = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Obtener listado con filtros y paginación
-  const fetchHardwareList = useCallback(async () => {
+  const fetchHardware = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await getHardwareList(queryParams);
-
       if (response && response.data) {
-        const items = response.data.data || [];
+        setHardwareList(response.data.data || []);
         const paginationMeta = response.data.meta || {
           total: 0,
           page: 1,
           totalPages: 1,
         };
-
-        setHardwareList(items);
         setMeta({
           total: paginationMeta.total,
           page: paginationMeta.page,
@@ -47,10 +52,10 @@ export const useHardware = () => {
         });
       }
     } catch (err: any) {
-      console.error("Error al cargar el hardware de la API:", err);
+      console.error("Error al cargar la lista de hardware:", err);
       setError(
         err?.response?.data?.message ||
-          "Ocurrió un error al cargar el hardware.",
+          "Ocurrió un error al obtener el hardware.",
       );
     } finally {
       setIsLoading(false);
@@ -58,14 +63,12 @@ export const useHardware = () => {
   }, [queryParams]);
 
   useEffect(() => {
-    fetchHardwareList();
-  }, [fetchHardwareList]);
+    fetchHardware();
+  }, [fetchHardware]);
 
-  // Manejo de filtros y paginación
   const updateQuery = (newFilters: Record<string, any>) => {
     setQueryParams((prev) => {
       const updated: Record<string, any> = { ...prev, ...newFilters, page: 1 };
-
       Object.keys(updated).forEach((key) => {
         if (
           updated[key] === undefined ||
@@ -74,15 +77,8 @@ export const useHardware = () => {
           updated[key] === ""
         ) {
           delete updated[key];
-        } else if (
-          ["id_cliente", "id_sucursal", "id_area", "page", "limit"].includes(
-            key,
-          )
-        ) {
-          updated[key] = Number(updated[key]);
         }
       });
-
       return updated as GetHardwareParams;
     });
   };
@@ -96,7 +92,10 @@ export const useHardware = () => {
   };
 
   const resetQuery = () => {
-    setQueryParams({ page: 1, limit: 10 });
+    setQueryParams({
+      page: 1,
+      limit: 10,
+    });
   };
 
   return {
@@ -109,20 +108,20 @@ export const useHardware = () => {
     updateQuery,
     setPage,
     setLimit,
+    refetch: fetchHardware,
     resetQuery,
-    refetch: fetchHardwareList,
   };
 };
 
 /**
- * Hook específico para obtener un componente de hardware por ID (FindById)
+ * Hook para obtener la Hoja de Vida / Detalle completo de un hardware por ID
  */
 export const useHardwareDetail = (id: number | string | undefined) => {
-  const [hardware, setHardware] = useState<HardwareItem | null>(null);
+  const [hardware, setHardware] = useState<HardwareDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchHardwareDetail = useCallback(async () => {
+  const fetchDetail = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
     setError(null);
@@ -132,10 +131,9 @@ export const useHardwareDetail = (id: number | string | undefined) => {
         setHardware(response.data);
       }
     } catch (err: any) {
-      console.error(`Error al obtener el hardware con id ${id}:`, err);
+      console.error("Error al obtener el detalle del hardware:", err);
       setError(
-        err?.response?.data?.message ||
-          "No se pudo cargar el detalle del hardware.",
+        err?.response?.data?.message || "No se pudo obtener el hardware.",
       );
     } finally {
       setIsLoading(false);
@@ -143,13 +141,13 @@ export const useHardwareDetail = (id: number | string | undefined) => {
   }, [id]);
 
   useEffect(() => {
-    fetchHardwareDetail();
-  }, [fetchHardwareDetail]);
+    fetchDetail();
+  }, [fetchDetail]);
 
   return {
     hardware,
     isLoading,
     error,
-    refetch: fetchHardwareDetail,
+    refetchDetail: fetchDetail,
   };
 };

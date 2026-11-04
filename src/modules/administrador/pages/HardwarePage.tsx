@@ -16,8 +16,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
 import { useHardware } from "@/hooks/hardware/useHardware";
+import { useHardwareMutations } from "@/hooks/hardware/useHardwareMutations";
 import { HardwareItem } from "@/types/hardware/hardware.types";
+import { HardwareFormData } from "@/schema/hardware/hardware.schema";
+import { HardwareTransitionFormData } from "@/schema/hardware/hardwareTransition.schema";
 import { getHardwareColumns } from "../components/hardware/HardwareColumns";
+import { HardwareModal } from "@/components/hardware/HardwareModal";
+import { HardwareDetailModal } from "@/components/hardware/HardwareDetailModal";
+import { HardwareTransitionModal } from "@/components/hardware/HardwareTransitionModal";
 
 function HardwarePage() {
   // 1. Hook de lectura y paginación de Hardware conectado al backend
@@ -31,18 +37,43 @@ function HardwarePage() {
     setPage,
     setLimit,
     resetQuery,
+    refetch,
   } = useHardware();
 
-  // 2. Catálogos globales en cascada (Clientes -> Sucursales -> Áreas)
+  // 2. Hook de mutaciones (Crear, Actualizar y Transición)
+  const {
+    crearHardware,
+    actualizarHardware,
+    transicionHardware,
+    isSubmitting,
+  } = useHardwareMutations();
+
+  // Estados para control de modales
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hardwareToEdit, setHardwareToEdit] = useState<HardwareItem | null>(
+    null,
+  );
+
+  // Estado para el modal de transición de estado
+  const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false);
+  const [hardwareToTransition, setHardwareToTransition] =
+    useState<HardwareItem | null>(null);
+
+  // Estado para el modal de detalle / hoja de vida
+  const [selectedDetailId, setSelectedDetailId] = useState<number | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // 3. Catálogos globales de la TABLA
   const {
     clientes,
     sucursales,
     areas,
     setSelectedClienteId,
     setSelectedSucursalId,
+    setSelectedAreaId,
   } = useCatalogOptions();
 
-  // Estados locales para rastrear las selecciones de los filtros en cascada
+  // Estados locales para rastrear las selecciones de los filtros en cascada de la tabla
   const [selectedEmpresaFilter, setSelectedEmpresaFilter] = useState<
     number | null
   >(null);
@@ -50,20 +81,85 @@ function HardwarePage() {
     number | null
   >(null);
 
-  // Estado local temporal para acumular los filtros antes de presionar el botón "Filtrar"
-  const [, setPendingFilters] = useState<Record<string, any>>({});
+  // ==========================================
+  // CATÁLOGOS EN CASCADA PARA EL MODAL (CREAR)
+  // ==========================================
+  const {
+    sucursales: modalSucursales,
+    areas: modalAreas,
+    equipos: modalEquipos,
+    setSelectedClienteId: setModalSelectedClienteId,
+    setSelectedSucursalId: setModalSelectedSucursalId,
+    setSelectedAreaId: setModalSelectedAreaId,
+  } = useCatalogOptions();
 
-  // Sincronizar Empresa seleccionada con el hook de catálogos
+  // ==========================================
+  // CATÁLOGOS EN CASCADA PARA EL MODAL DE TRANSICIÓN
+  // ==========================================
+  const {
+    sucursales: transitionSucursales,
+    areas: transitionAreas,
+    equipos: transitionEquipos,
+    setSelectedClienteId: setTransitionSelectedClienteId,
+    setSelectedSucursalId: setTransitionSelectedSucursalId,
+    setSelectedAreaId: setTransitionSelectedAreaId,
+  } = useCatalogOptions();
+
+  // Sincronizar Empresa seleccionada en la tabla
   useEffect(() => {
     setSelectedClienteId(selectedEmpresaFilter);
     setSelectedSucursalFilter(null);
     setSelectedSucursalId(null);
-  }, [selectedEmpresaFilter, setSelectedClienteId, setSelectedSucursalId]);
+    setSelectedAreaId(null);
+  }, [
+    selectedEmpresaFilter,
+    setSelectedClienteId,
+    setSelectedSucursalId,
+    setSelectedAreaId,
+  ]);
 
-  // Sincronizar Sucursal seleccionada con el hook de catálogos
+  // Sincronizar Sucursal seleccionada en la tabla
   useEffect(() => {
     setSelectedSucursalId(selectedSucursalFilter);
   }, [selectedSucursalFilter, setSelectedSucursalId]);
+
+  // Manejadores en cascada para el MODAL DE CREACIÓN
+  const handleModalClienteChange = (clienteId: string | number) => {
+    const numId = clienteId ? Number(clienteId) : null;
+    setModalSelectedClienteId(numId);
+    setModalSelectedSucursalId(null);
+    setModalSelectedAreaId(null);
+  };
+
+  const handleModalSucursalChange = (sucursalId: string | number) => {
+    const numId = sucursalId ? Number(sucursalId) : null;
+    setModalSelectedSucursalId(numId);
+    setModalSelectedAreaId(null);
+  };
+
+  const handleModalAreaChange = (areaId: string | number) => {
+    const numId = areaId ? Number(areaId) : null;
+    setModalSelectedAreaId(numId);
+  };
+
+  // Manejadores en cascada para el MODAL DE TRANSICIÓN
+  const handleTransitionClienteChange = (clienteId: string | number) => {
+    const numId = clienteId ? Number(clienteId) : null;
+    setTransitionSelectedClienteId(numId);
+    setTransitionSelectedSucursalId(null);
+    setTransitionSelectedAreaId(null);
+  };
+
+  const handleTransitionSucursalChange = (sucursalId: string | number) => {
+    const numId = sucursalId ? Number(sucursalId) : null;
+    setTransitionSelectedSucursalId(numId);
+    setTransitionSelectedAreaId(null);
+  };
+
+  const handleTransitionAreaChange = (areaId: string | number) => {
+    const numId = areaId ? Number(areaId) : null;
+    setTransitionSelectedAreaId(numId);
+  };
 
   // Opciones estáticas permitidas para el filtro de estado del hardware
   const estadosHardwareOptions = [
@@ -73,23 +169,77 @@ function HardwarePage() {
     { label: "Baja / Descarte", value: "BAJA" },
   ];
 
-  // Acciones de UI
+  // Manejadores de acciones de UI y Modales
   const handleOpenCreate = () => {
-    toast.info("Modal de creación de hardware en desarrollo...");
-  };
-
-  const handleViewDetail = (item: HardwareItem) => {
-    toast.info(
-      `Ver detalle de hardware ID: ${item.id_hardware} (${item.numero_serie})`,
-    );
+    setModalSelectedClienteId(null);
+    setModalSelectedSucursalId(null);
+    setModalSelectedAreaId(null);
+    setHardwareToEdit(null);
+    setIsModalOpen(true);
   };
 
   const handleEdit = (item: HardwareItem) => {
-    toast.info(`Editar componente ID: ${item.id_hardware}`);
+    setHardwareToEdit(item);
+    setIsModalOpen(true);
   };
 
-  const handleToggleStatus = (item: HardwareItem) => {
-    toast.warning(`Gestionar estado o baja para: ${item.numero_serie}`);
+  const handleViewDetail = (item: HardwareItem) => {
+    setSelectedDetailId(item.id_hardware);
+    setIsDetailOpen(true);
+  };
+
+  const handleOpenTransition = (item: HardwareItem) => {
+    setHardwareToTransition(item);
+    setTransitionSelectedClienteId(null);
+    setTransitionSelectedSucursalId(null);
+    setTransitionSelectedAreaId(null);
+    setIsTransitionModalOpen(true);
+  };
+
+  // Submit unificado para el formulario de Creación o Actualización
+  const handleSubmitForm = async (data: HardwareFormData) => {
+    try {
+      if (hardwareToEdit) {
+        const {
+          ubicacion_inicial,
+          id_equipo_destino,
+          id_cliente_temp,
+          id_sucursal_temp,
+          id_area_temp,
+          ...updatePayload
+        } = data as any;
+
+        await actualizarHardware(hardwareToEdit.id_hardware, updatePayload);
+        toast.success("Hardware actualizado correctamente");
+      } else {
+        await crearHardware({
+          ...data,
+          ubicacion_inicial: data.ubicacion_inicial ?? "ALMACEN_CENTRAL",
+        });
+        toast.success("Hardware registrado correctamente");
+      }
+      setIsModalOpen(false);
+      refetch();
+    } catch (error: any) {
+      console.error(error);
+    }
+  };
+
+  // Submit para el modal de transición de estado
+  const handleSubmitTransition = async (data: HardwareTransitionFormData) => {
+    if (!hardwareToTransition) return;
+    try {
+      await transicionHardware(hardwareToTransition.id_hardware, {
+        estado: data.estado as any,
+        motivo: data.motivo,
+        id_equipo: data.estado === "INSTALADO" ? Number(data.id_equipo) : null,
+      });
+      toast.success("Estado del hardware actualizado con éxito");
+      setIsTransitionModalOpen(false);
+      refetch();
+    } catch (error: any) {
+      console.error(error);
+    }
   };
 
   return (
@@ -167,7 +317,7 @@ function HardwarePage() {
         />
       </div>
 
-      {/* FILTROS (Acumulados localmente hasta hacer clic en "Filtrar") */}
+      {/* FILTROS */}
       <TableFiltersBar
         searchPlaceholder="Buscar por Nº Serie, Marca/Modelo, Tipo o Proveedor..."
         dropdowns={[
@@ -201,11 +351,8 @@ function HardwarePage() {
             const sucursalId = value && value !== "all" ? Number(value) : null;
             setSelectedSucursalFilter(sucursalId);
           }
-          // Solo actualizamos de forma temporal los filtros pendientes sin disparar la API aún
-          setPendingFilters((prev) => ({ ...prev, [key]: value }));
         }}
         onApplyFilters={(filters) => {
-          // AQUÍ SE DISPARA LA PETICIÓN AL BACKEND AL PRESIONAR EL BOTÓN FILTRAR
           const formattedFilters: Record<string, any> = {};
 
           Object.entries(filters).forEach(([key, val]) => {
@@ -231,7 +378,6 @@ function HardwarePage() {
         onResetFilters={() => {
           setSelectedEmpresaFilter(null);
           setSelectedSucursalFilter(null);
-          setPendingFilters({});
           resetQuery();
           toast.info("Filtros restablecidos");
         }}
@@ -243,7 +389,7 @@ function HardwarePage() {
         columns={getHardwareColumns({
           onViewDetail: handleViewDetail,
           onEdit: handleEdit,
-          onToggleStatus: handleToggleStatus,
+          onToggleStatus: handleOpenTransition, // Conectado al modal de transición
         })}
         keyExtractor={(item) => String(item.id_hardware)}
         isLoading={isLoading}
@@ -259,6 +405,45 @@ function HardwarePage() {
         pageSize={limit}
         onPageChange={setPage}
         onPageSizeChange={setLimit}
+      />
+
+      {/* MODAL DE CREACIÓN / EDICIÓN */}
+      <HardwareModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmitForm}
+        hardwareToEdit={hardwareToEdit}
+        isSubmitting={isSubmitting}
+        clientes={clientes}
+        sucursales={modalSucursales}
+        areas={modalAreas}
+        equipos={modalEquipos}
+        onClienteChange={handleModalClienteChange}
+        onSucursalChange={handleModalSucursalChange}
+        onAreaChange={handleModalAreaChange}
+      />
+
+      {/* MODAL DE TRANSICIÓN DE ESTADO */}
+      <HardwareTransitionModal
+        isOpen={isTransitionModalOpen}
+        onClose={() => setIsTransitionModalOpen(false)}
+        onSubmit={handleSubmitTransition}
+        hardware={hardwareToTransition}
+        isSubmitting={isSubmitting}
+        clientes={clientes}
+        sucursales={transitionSucursales}
+        areas={transitionAreas}
+        equipos={transitionEquipos}
+        onClienteChange={handleTransitionClienteChange}
+        onSucursalChange={handleTransitionSucursalChange}
+        onAreaChange={handleTransitionAreaChange}
+      />
+
+      {/* MODAL DE DETALLE / HOJA DE VIDA */}
+      <HardwareDetailModal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        hardwareId={selectedDetailId}
       />
     </div>
   );

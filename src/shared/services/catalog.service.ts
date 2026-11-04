@@ -107,3 +107,18 @@ export const getZonasOptions = async (): Promise<SelectOption<number>[]> => {
     nombre: zone.nombre_zona,
   }));
 };
+
+export const getEquiposOptions = async (
+  idArea: number,
+): Promise<SelectOption<number>[]> => {
+  const response = await api.get<{
+    data: { id_equipo: number; nombre_equipo: string }[];
+  }>(`/equipos/options/${idArea}`);
+
+  const equiposArray = response.data.data;
+
+  return equiposArray.map((eq) => ({
+    value: eq.id_equipo,
+    label: eq.nombre_equipo,
+  }));
+};
