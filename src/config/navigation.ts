@@ -30,7 +30,7 @@ export const NAVIGATION_MENU: NavItem[] = [
     icon: LayoutGrid,
     roles: [
       "ADMINISTRADOR",
-      "SOPORTE_REMOTO",
+      "SOPORTE_TECNICO",
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",
@@ -73,7 +73,7 @@ export const NAVIGATION_MENU: NavItem[] = [
     icon: Laptop,
     roles: [
       "ADMINISTRADOR",
-      "SOPORTE_REMOTO",
+      "SOPORTE_TECNICO",
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",
@@ -84,13 +84,23 @@ export const NAVIGATION_MENU: NavItem[] = [
     title: "Hardware",
     path: "/hardware",
     icon: Cpu,
-    roles: ["ADMINISTRADOR", "SOPORTE_REMOTO", "SOPORTE_INSITU"],
+    roles: [
+      "ADMINISTRADOR",
+      "SOPORTE_REMOTO",
+      "SOPORTE_INSITU",
+      "SOPORTE_TECNICO",
+    ],
   },
   {
     title: "Software",
     path: "/software",
     icon: Boxes,
-    roles: ["ADMINISTRADOR", "SOPORTE_REMOTO", "SOPORTE_INSITU"],
+    roles: [
+      "ADMINISTRADOR",
+      "SOPORTE_REMOTO",
+      "SOPORTE_INSITU",
+      "SOPORTE_TECNICO",
+    ],
   },
   {
     title: "Planes",
@@ -104,7 +114,7 @@ export const NAVIGATION_MENU: NavItem[] = [
     icon: Ticket,
     roles: [
       "ADMINISTRADOR",
-      "SOPORTE_REMOTO",
+      "SOPORTE_TECNICO",
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",
@@ -117,6 +127,7 @@ export const NAVIGATION_MENU: NavItem[] = [
     icon: CalendarDays,
     roles: [
       "ADMINISTRADOR",
+      "SOPORTE_TECNICO",
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",

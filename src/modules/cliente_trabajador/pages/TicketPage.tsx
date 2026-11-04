@@ -13,37 +13,20 @@ import {
   getTrabajadorTicketsColumns,
   TrabajadorTicketItem,
 } from "../components/ticket/Columns";
+import { useAuth } from "@/context/useAuth";
 
 function TicketPage() {
-  // 1. Extraer de forma segura el id del trabajador logueado desde localStorage
-  const [trabajadorId, setTrabajadorId] = useState<number | null>(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        const id =
-          parsedUser.id_trabajador || parsedUser.id || parsedUser.id_usuario;
-        return id ? Number(id) : null;
-      } catch (e) {
-        console.error("Error al parsear el usuario del localStorage", e);
-      }
-    }
-    return null;
-  });
+  // 1. Obtenemos el usuario autenticado directamente desde el AuthContext
+  const { user } = useAuth();
 
-  // 2. Consumir el hook filtrando automáticamente por el id_trabajador
-  const {
-    tickets,
-    meta,
-    isLoading,
-    queryParams,
-    limit,
-    updateQuery,
-    setPage,
-    setLimit,
-  } = useTickets({
-    initialParams: trabajadorId ? { id_trabajador: trabajadorId } : undefined,
-  });
+  // Extraemos el ID de forma segura (el ID que se extrajo del token JWT y se guardó en el usuario)
+  const trabajadorId = user?.id;
+
+  // 2. Consumir el hook filtrando automáticamente por el id_trabajador obtenido del contexto
+  const { tickets, meta, isLoading, limit, updateQuery, setPage, setLimit } =
+    useTickets({
+      initialParams: trabajadorId ? { id_trabajador: trabajadorId } : undefined,
+    });
 
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("Todos");
@@ -53,7 +36,7 @@ function TicketPage() {
     updateQuery({ estado: estadoValue });
   }, [activeTab]);
 
-  // 3. Mapeo correcto para transformar los datos anidados de la API al formato que exige la tabla
+  // Mapear los tickets obtenidos del backend a la estructura que espera la tabla
   const mappedTickets: TrabajadorTicketItem[] = tickets.map(
     (t: TicketListItem) => {
       const nombreSoporte = t.soporte
@@ -77,8 +60,6 @@ function TicketPage() {
       };
     },
   );
-
-  console.log(meta);
 
   const handleOpenChat = (item: TrabajadorTicketItem) => {
     navigate(`/trabajador/tickets/${item.id_ticket}`, {
@@ -114,7 +95,7 @@ function TicketPage() {
               className="bg-[#ff5722] hover:bg-[#f4511e] text-white font-bold h-10 px-4 rounded-xl shadow-sm cursor-pointer text-xs"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Nuevo Ticket de Soporte
+              Nuevo Ticket
             </Button>
           </div>
         }
@@ -159,7 +140,7 @@ function TicketPage() {
           { label: "Todos", value: "Todos" },
           { label: "Pendiente", value: "Pendiente" },
           { label: "En Progreso", value: "En Progreso" },
-          { label: "Derivado InSitu", value: "Derivado InSitu" },
+          { label: "Derivado InSitu", value: "Derivado Insitu" },
           { label: "En Espera Repuesto", value: "En Espera Repuesto" },
           { label: "Cerrado", value: "Cerrado" },
         ].map((tab) => {

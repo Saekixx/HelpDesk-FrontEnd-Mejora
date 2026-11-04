@@ -4,6 +4,7 @@ import { AuthContext } from "./AuthContext";
 import type { User } from "../types/auth";
 import type { Role } from "../config/rolePermissions";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 // Componente proveedor de autenticación
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -21,12 +22,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Función para iniciar sesión y almacenar el token y el usuario en el estado y en localStorage
   const login = (data: {
     token: string;
-    user: { nombre: string; apellido: string; correo: string; role: string };
+    user: {
+      nombre: string;
+      apellido: string;
+      correo: string;
+      role: string;
+      id_empresa?: number | null;
+      id_sucursal?: number | null;
+      id_area?: number | null;
+    };
   }) => {
+    // Extraemos el ID del usuario desde el "sub" del token JWT de manera segura
+    let userId: number | undefined;
+    try {
+      const decodedToken: any = jwtDecode(data.token);
+      if (decodedToken && decodedToken.sub) {
+        userId = Number(decodedToken.sub);
+      }
+    } catch (error) {
+      console.error("Error al decodificar el token JWT:", error);
+    }
+
     const userRole = data.user.role as Role;
 
+    // Incluimos el ID extraído para que esté disponible en la app y localStorage
     const userWithPermissions: User = {
       ...data.user,
+      id: userId,
       role: userRole,
     };
 
