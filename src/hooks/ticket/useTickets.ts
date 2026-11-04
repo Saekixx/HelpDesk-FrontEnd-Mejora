@@ -3,10 +3,15 @@ import { getTicketById, getTickets } from "@/services/ticket/ticket.service";
 import { TicketListItem, GetTicketsParams } from "@/types/ticket/ticket.type";
 import { TicketDetailBackend } from "@/types/ticket/ticket-chat.type";
 
-export const useTickets = () => {
+interface UseTicketsOptions {
+  initialParams?: GetTicketsParams;
+}
+
+export const useTickets = (options?: UseTicketsOptions) => {
   const [queryParams, setQueryParams] = useState<GetTicketsParams>({
     page: 1,
     limit: 10,
+    ...(options?.initialParams || {}),
   });
 
   const [tickets, setTickets] = useState<TicketListItem[]>([]);
@@ -24,7 +29,8 @@ export const useTickets = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getTickets(queryParams);
+      const paramsToSend = { ...queryParams };
+      const response = await getTickets(paramsToSend);
 
       if (response && response.data) {
         const items = response.data.data || [];
@@ -52,6 +58,7 @@ export const useTickets = () => {
     }
   }, [queryParams]);
 
+  // Refrescar tickets cuando cambian los parámetros de consulta
   useEffect(() => {
     fetchTickets();
   }, [fetchTickets]);
@@ -66,13 +73,20 @@ export const useTickets = () => {
           updated[key] === undefined ||
           updated[key] === null ||
           updated[key] === "all" ||
-          updated[key] === ""
+          updated[key] === "" ||
+          updated[key] === "Todos"
         ) {
           delete updated[key];
         } else if (
-          ["id_cliente", "id_sucursal", "id_area", "page", "limit"].includes(
-            key,
-          )
+          [
+            "id_cliente",
+            "id_sucursal",
+            "id_area",
+            "id_trabajador",
+            "id_soporte",
+            "page",
+            "limit",
+          ].includes(key)
         ) {
           updated[key] = Number(updated[key]);
         }
@@ -91,7 +105,7 @@ export const useTickets = () => {
   };
 
   const resetQuery = () => {
-    setQueryParams({ page: 1, limit: 10 });
+    setQueryParams({ page: 1, limit: 10, ...(options?.initialParams || {}) });
   };
 
   return {

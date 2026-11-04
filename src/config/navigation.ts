@@ -34,6 +34,7 @@ export const NAVIGATION_MENU: NavItem[] = [
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",
+      "CLIENTE_TRABAJADOR",
     ],
   },
   {
@@ -76,6 +77,7 @@ export const NAVIGATION_MENU: NavItem[] = [
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",
+      "CLIENTE_TRABAJADOR",
     ],
   },
   {
@@ -118,6 +120,7 @@ export const NAVIGATION_MENU: NavItem[] = [
       "SOPORTE_INSITU",
       "CLIENTE_EMPRESA",
       "CLIENTE_SUCURSAL",
+      "CLIENTE_TRABAJADOR",
     ],
   },
 ];

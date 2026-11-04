@@ -58,6 +58,8 @@ export interface GetTicketsParams {
   id_cliente?: number;
   id_sucursal?: number;
   id_area?: number;
+  id_trabajador?: number; // Para filtrar tickets asignados a un trabajador específico
+  id_soporte?: number; // Para filtrar tickets asignados a un soporte específico
   page?: number;
   limit?: number;
 }
