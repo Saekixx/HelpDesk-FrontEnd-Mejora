@@ -199,25 +199,31 @@ function HardwarePage() {
   // Submit unificado para el formulario de Creación o Actualización
   const handleSubmitForm = async (data: HardwareFormData) => {
     try {
-      if (hardwareToEdit) {
-        const {
-          ubicacion_inicial,
-          id_equipo_destino,
-          id_cliente_temp,
-          id_sucursal_temp,
-          id_area_temp,
-          ...updatePayload
-        } = data as any;
+      // Extraemos y separamos los campos temporales de TODOS los datos del formulario
+      const {
+        ubicacion_inicial,
+        id_equipo_destino,
+        id_cliente_temp,
+        id_sucursal_temp,
+        id_area_temp,
+        ...cleanData
+      } = data as any;
 
-        await actualizarHardware(hardwareToEdit.id_hardware, updatePayload);
+      if (hardwareToEdit) {
+        // En edición usamos los datos limpios
+        await actualizarHardware(hardwareToEdit.id_hardware, cleanData);
         toast.success("Hardware actualizado correctamente");
       } else {
+        // En creación usamos los datos limpios y le agregamos la ubicación inicial si aplica
         await crearHardware({
-          ...data,
-          ubicacion_inicial: data.ubicacion_inicial ?? "ALMACEN_CENTRAL",
+          ...cleanData,
+          ubicacion_inicial: ubicacion_inicial ?? "ALMACEN_CENTRAL",
+          // Si al crear se seleccionó un equipo de destino y tu API lo requiere:
+          ...(id_equipo_destino && { id_equipo_destino }),
         });
         toast.success("Hardware registrado correctamente");
       }
+
       setIsModalOpen(false);
       refetch();
     } catch (error: any) {
