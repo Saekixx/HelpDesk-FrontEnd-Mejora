@@ -9,11 +9,16 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useCatalogOptions } from "@/shared/hooks/useCatalogOptions";
 import { useSoftware } from "@/hooks/software/useSoftware";
+import { useSoftwareMutations } from "@/hooks/software/useSoftwareMutations";
 import {
   getSoftwareColumns,
   SoftwareItem,
 } from "../components/software/SoftwareColumns";
 import { SoftwareItem as SoftwareBackendItem } from "@/types/software/software.type";
+import { SoftwareModal } from "@/components/software/SoftwareModal";
+import { SoftwareDetailModal } from "@/components/software/SoftwareDetailModal";
+import { SoftwareBovedaModal } from "@/components/software/SoftwareBovedaModal";
+import { SoftwareFormData } from "@/schema/software/software.schema";
 
 function SoftwarePage() {
   const {
@@ -26,12 +31,34 @@ function SoftwarePage() {
     setPage,
     setLimit,
     resetQuery,
+    refetch,
   } = useSoftware();
 
-  // Catálogos globales en cascada (Clientes -> Sucursales)
-  const { clientes, sucursales, setSelectedClienteId } = useCatalogOptions();
+  const {
+    crearSoftware,
+    actualizarSoftware,
+    asignarSoftware,
+    liberarSoftware,
+    isSubmitting,
+  } = useSoftwareMutations();
 
-  // Estados locales para filtros en cascada
+  // Estados para controlar los modales
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [softwareToEdit, setSoftwareToEdit] =
+    useState<SoftwareBackendItem | null>(null);
+
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedDetailId, setSelectedDetailId] = useState<
+    number | string | null
+  >(null);
+
+  const [isBovedaOpen, setIsBovedaOpen] = useState(false);
+  const [selectedBovedaId, setSelectedBovedaId] = useState<
+    number | string | null
+  >(null);
+
+  // 1. Catálogos globales para la TABLA
+  const { clientes, sucursales, setSelectedClienteId } = useCatalogOptions();
   const [selectedEmpresaFilter, setSelectedEmpresaFilter] = useState<
     number | null
   >(null);
@@ -40,10 +67,29 @@ function SoftwarePage() {
     setSelectedClienteId(selectedEmpresaFilter);
   }, [selectedEmpresaFilter, setSelectedClienteId]);
 
-  // Estado local temporal para acumular filtros antes de hacer clic en "Filtrar"
+  // 2. Catálogos para el MODAL DE CREACIÓN/EDICIÓN
+  const {
+    sucursales: modalSucursales,
+    setSelectedClienteId: setModalSelectedClienteId,
+    setSelectedSucursalId: setModalSelectedSucursalId,
+  } = useCatalogOptions();
+
+  const handleModalClienteChange = (clienteId: string | number) => {
+    const numId = clienteId ? Number(clienteId) : null;
+    setModalSelectedClienteId(numId);
+    setModalSelectedSucursalId(null);
+  };
+
+  // 3. Catálogos en cascada específicos para el MODAL DE BÓVEDA (Áreas -> Equipos)
+  const {
+    areas: bovedaAreas,
+    equipos: bovedaEquipos,
+    setSelectedSucursalId: setBovedaSelectedSucursalId,
+    setSelectedAreaId: setBovedaSelectedAreaId,
+  } = useCatalogOptions();
+
   const [, setPendingFilters] = useState<Record<string, any>>({});
 
-  // Opciones estáticas permitidas para los filtros del backend
   const estadosOptions = [
     { label: "Activo", value: "Activo" },
     { label: "Suspendido", value: "Suspendido" },
@@ -51,7 +97,6 @@ function SoftwarePage() {
     { label: "Inactivo", value: "Inactivo" },
   ];
 
-  // 3. Mapeador de los datos de la API (SoftwareBackendItem) al formato que espera la tabla (SoftwareItem)
   const mappedSoftware: SoftwareItem[] = softwareList.map(
     (s: SoftwareBackendItem) => {
       const usados = s.licencias_usadas ?? 0;
@@ -86,28 +131,81 @@ function SoftwarePage() {
   );
 
   const handleViewDetail = (item: SoftwareItem) => {
-    toast.info(`Ver detalle de licenciamiento: ${item.nombre_software}`);
+    setSelectedDetailId(item.id_software);
+    setIsDetailOpen(true);
   };
 
   const handleEdit = (item: SoftwareItem) => {
-    toast.info(`Editar software: ${item.nombre_software}`);
+    const originalItem = softwareList.find(
+      (s) => String(s.id_software) === item.id_software,
+    );
+    if (originalItem) {
+      setSoftwareToEdit(originalItem);
+      if (originalItem.id_cliente) {
+        setModalSelectedClienteId(Number(originalItem.id_cliente));
+      }
+      setIsModalOpen(true);
+    } else {
+      toast.error("No se encontró el registro para editar.");
+    }
   };
 
   const handleManageLicenses = (item: SoftwareItem) => {
-    toast.warning(
-      `Gestionar cupos y asignaciones para: ${item.nombre_software}`,
+    const originalItem = softwareList.find(
+      (s) => String(s.id_software) === item.id_software,
     );
+    if (originalItem) {
+      setSelectedBovedaId(originalItem.id_software);
+      setIsBovedaOpen(true);
+    } else {
+      toast.error("No se pudo cargar la bóveda del software.");
+    }
   };
 
   const handleOpenCreate = () => {
-    toast.success(
-      "Modal de 'Registrar Nuevo Software / Lote' en desarrollo...",
-    );
+    setSoftwareToEdit(null);
+    setModalSelectedClienteId(null);
+    setModalSelectedSucursalId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmitForm = async (data: SoftwareFormData) => {
+    try {
+      const payload = { ...data };
+      if (softwareToEdit && !payload.licencia_master_key) {
+        delete payload.licencia_master_key;
+      }
+
+      if (softwareToEdit) {
+        await actualizarSoftware(softwareToEdit.id_software, payload);
+        toast.success("Lote de software actualizado correctamente");
+      } else {
+        await crearSoftware(payload);
+        toast.success("Lote de software registrado correctamente");
+      }
+      setIsModalOpen(false);
+      refetch();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || "Ocurrió un error al procesar el software");
+    }
+  };
+
+  const handleAssignEquipment = async (
+    softwareId: number | string,
+    data: any,
+  ) => {
+    await asignarSoftware(softwareId, data);
+    refetch();
+  };
+
+  const handleReleaseEquipment = async (idAssignment: number | string) => {
+    await liberarSoftware(idAssignment);
+    refetch();
   };
 
   return (
     <div className="p-6 bg-slate-50/50 min-h-screen space-y-4">
-      {/* 1. CABECERA */}
       <PageHeader
         category="MÓDULOS DE GESTIÓN > SOFTWARE & LICENCIAMIENTO"
         title={
@@ -144,7 +242,6 @@ function SoftwarePage() {
         }
       />
 
-      {/* 2. MÉTRICAS SUPERIORES */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           title="TOTAL PROGRAMAS / LOTES"
@@ -174,7 +271,6 @@ function SoftwarePage() {
         />
       </div>
 
-      {/* 3. BARRA DE FILTROS (Aplicando acumulación local hasta dar click en Filtrar) */}
       <TableFiltersBar
         searchPlaceholder="Buscar por Software, SKU, Proveedor o Categoría..."
         dropdowns={[
@@ -233,7 +329,6 @@ function SoftwarePage() {
         }}
       />
 
-      {/* 4. TABLA DE DATOS CONECTADA AL HOOK REAL */}
       <DataTableContainer
         data={mappedSoftware}
         columns={getSoftwareColumns({
@@ -245,7 +340,6 @@ function SoftwarePage() {
         isLoading={isLoading}
       />
 
-      {/* 5. PAGINACIÓN */}
       <TablePaginationBar
         meta={{
           total: meta.total,
@@ -255,6 +349,37 @@ function SoftwarePage() {
         pageSize={limit}
         onPageChange={setPage}
         onPageSizeChange={setLimit}
+      />
+
+      <SoftwareModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmitForm}
+        softwareToEdit={softwareToEdit}
+        isSubmitting={isSubmitting}
+        clientes={clientes}
+        sucursales={modalSucursales}
+        onClienteChange={handleModalClienteChange}
+      />
+
+      <SoftwareDetailModal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        softwareId={selectedDetailId}
+      />
+
+      {/* Modal de Bóveda con los catálogos y setters inyectados */}
+      <SoftwareBovedaModal
+        isOpen={isBovedaOpen}
+        onClose={() => setIsBovedaOpen(false)}
+        softwareId={selectedBovedaId}
+        onAssignEquipment={handleAssignEquipment}
+        onReleaseEquipment={handleReleaseEquipment}
+        isSubmitting={isSubmitting}
+        areas={bovedaAreas}
+        equipos={bovedaEquipos}
+        setSelectedSucursalId={setBovedaSelectedSucursalId}
+        setSelectedAreaId={setBovedaSelectedAreaId}
       />
     </div>
   );

@@ -45,15 +45,19 @@ interface TicketsColumnsProps {
 
 // Estilos de Badge para Estado del Ticket
 const getEstadoBadgeStyle = (estado: string) => {
-  switch (estado) {
+  const est = estado.toUpperCase().trim();
+  switch (est) {
     case "PENDIENTE":
       return "bg-amber-50 text-amber-800 border-amber-200";
     case "EN PROGRESO":
+    case "EN_PROGRESO":
     case "ASIGNADO":
       return "bg-blue-50 text-blue-700 border-blue-200";
     case "DERIVADO INSITU":
+    case "DERIVADO_INSITU":
       return "bg-purple-50 text-purple-700 border-purple-200";
     case "EN ESPERA REPUESTO":
+    case "EN_ESPERA_REPUESTO":
       return "bg-amber-50 text-amber-700 border-amber-300";
     case "REABIERTO":
       return "bg-rose-50 text-rose-700 border-rose-200";

@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getSoftwareList,
   getSoftwareById,
+  getSoftwareBoveda,
 } from "@/services/software/software.service";
 import {
   SoftwareItem,
   GetSoftwareParams,
+  SoftwareBovedaResponse,
 } from "@/types/software/software.type";
 
 export const useSoftware = () => {
@@ -162,5 +164,45 @@ export const useSoftwareDetail = (id: number | string | undefined) => {
     isLoading,
     error,
     refetch: fetchSoftwareDetail,
+  };
+};
+
+export const useSoftwareBoveda = (id: number | string | undefined) => {
+  const [boveda, setBoveda] = useState<SoftwareBovedaResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSoftwareBoveda = useCallback(async () => {
+    if (!id) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await getSoftwareBoveda(id);
+      if (response && response.data) {
+        setBoveda(response.data);
+      }
+    } catch (err: any) {
+      console.error(
+        `Error al obtener la bóveda del software con id ${id}:`,
+        err,
+      );
+      setError(
+        err?.response?.data?.message ||
+          "No se pudo cargar la bóveda del software.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchSoftwareBoveda();
+  }, [fetchSoftwareBoveda]);
+
+  return {
+    boveda,
+    isLoading,
+    error,
+    refetch: fetchSoftwareBoveda,
   };
 };
