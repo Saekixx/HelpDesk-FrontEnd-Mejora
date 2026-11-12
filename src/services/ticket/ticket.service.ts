@@ -1,6 +1,7 @@
 import { api } from "@/lib/axios";
 import { ApiResponse, NestedPaginatedResponse } from "@/types/api.types";
 import { TicketDetailBackend } from "@/types/ticket/ticket-chat.type";
+import { createTicketRequest } from "@/types/ticket/ticket.request";
 import { GetTicketsParams, TicketListItem } from "@/types/ticket/ticket.type";
 
 /**
@@ -25,6 +26,18 @@ export const getTicketById = async (
 ): Promise<ApiResponse<TicketDetailBackend>> => {
   const response = await api.get<ApiResponse<TicketDetailBackend>>(
     `/ticket/${id}`,
+  );
+  return response.data;
+};
+
+/**
+ * Crear un nuevo ticket
+ * Endpoint: POST /ticket
+ */
+export const createTicket = async (request: createTicketRequest) => {
+  const response = await api.post<ApiResponse<TicketDetailBackend>>(
+    "/ticket",
+    request,
   );
   return response.data;
 };

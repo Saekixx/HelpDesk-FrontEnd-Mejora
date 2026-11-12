@@ -184,7 +184,7 @@ function SoftwarePage() {
         toast.success("Lote de software registrado correctamente");
       }
       setIsModalOpen(false);
-      refetch();
+      refetch(); // Refrescar la lista de software después de la operación
     } catch (error: any) {
       console.error(error);
       toast.error(error?.message || "Ocurrió un error al procesar el software");
@@ -196,12 +196,12 @@ function SoftwarePage() {
     data: any,
   ) => {
     await asignarSoftware(softwareId, data);
-    refetch();
+    refetch(); // Refrescar la lista de software después de asignar un equipo
   };
 
   const handleReleaseEquipment = async (idAssignment: number | string) => {
     await liberarSoftware(idAssignment);
-    refetch();
+    refetch(); // Refrescar la lista de software después de liberar un equipo
   };
 
   return (

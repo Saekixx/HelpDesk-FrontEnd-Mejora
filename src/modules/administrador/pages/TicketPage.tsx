@@ -21,8 +21,11 @@ import {
 import { useTickets } from "@/hooks/ticket/useTickets";
 import { TicketListItem } from "@/types/ticket/ticket.type";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/useAuth";
 
 function TicketsPage() {
+  const { user } = useAuth(); // Obtener el usuario autenticado desde el contexto de autenticación
+
   // 1. Conectamos con el hook de lectura de tickets de la API
   const {
     tickets,
@@ -34,7 +37,7 @@ function TicketsPage() {
     setPage,
     setLimit,
     resetQuery,
-  } = useTickets();
+  } = useTickets({ userId: user?.id }); // Pasamos el ID del usuario al hook
 
   // Catálogos globales en cascada (Clientes -> Sucursales -> Áreas)
   const {

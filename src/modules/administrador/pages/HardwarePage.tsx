@@ -225,7 +225,7 @@ function HardwarePage() {
       }
 
       setIsModalOpen(false);
-      refetch();
+      refetch(); // Refrescar la lista de hardware después de la operación
     } catch (error: any) {
       console.error(error);
     }
@@ -242,7 +242,7 @@ function HardwarePage() {
       });
       toast.success("Estado del hardware actualizado con éxito");
       setIsTransitionModalOpen(false);
-      refetch();
+      refetch(); // Refrescar la lista de hardware después de la transición
     } catch (error: any) {
       console.error(error);
     }

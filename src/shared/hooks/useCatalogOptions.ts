@@ -33,6 +33,9 @@ export const useCatalogOptions = () => {
     null,
   );
   const [selectedAreaId, setSelectedAreaId] = useState<number | null>(null);
+  const [selectedTrabajadorId, setSelectedTrabajadorId] = useState<
+    number | null
+  >(null);
 
   // Estados de carga
   const [loadingRoles, setLoadingRoles] = useState<boolean>(false);
@@ -162,7 +165,6 @@ export const useCatalogOptions = () => {
       return;
     }
 
-    // Función para consultar trabajadores según los filtros seleccionados
     const fetchTrabajadores = async () => {
       setLoadingTrabajadores(true);
       try {
@@ -211,11 +213,11 @@ export const useCatalogOptions = () => {
     [],
   );
 
-  // 6. Cargar equipos en cascada cuando cambia el área seleccionada
+  // 6. Cargar equipos en cascada cuando cambia el área o el trabajador seleccionado
   useEffect(() => {
     let isMounted = true;
 
-    if (!selectedAreaId) {
+    if (!selectedAreaId && !selectedTrabajadorId) {
       setEquipos([]);
       return;
     }
@@ -223,7 +225,10 @@ export const useCatalogOptions = () => {
     const fetchEquipos = async () => {
       setLoadingEquipos(true);
       try {
-        const data = await getEquiposOptions(selectedAreaId);
+        const data = await getEquiposOptions({
+          id_area: selectedAreaId ?? undefined,
+          id_trabajador: selectedTrabajadorId ?? undefined,
+        });
         if (isMounted) {
           setEquipos(data || []);
         }
@@ -241,7 +246,7 @@ export const useCatalogOptions = () => {
     return () => {
       isMounted = false;
     };
-  }, [selectedAreaId]);
+  }, [selectedAreaId, selectedTrabajadorId]);
 
   // 7. Cargar zonas
   useEffect(() => {
@@ -312,6 +317,7 @@ export const useCatalogOptions = () => {
     setSelectedClienteId,
     setSelectedSucursalId,
     setSelectedAreaId,
+    setSelectedTrabajadorId,
 
     // Estados de carga
     loading,

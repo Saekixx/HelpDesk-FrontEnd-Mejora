@@ -5,7 +5,6 @@ import { FileText, Plus, LifeBuoy } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { useTickets } from "@/hooks/ticket/useTickets";
 import { TicketListItem } from "@/types/ticket/ticket.type";
 import { useNavigate } from "react-router-dom";
@@ -14,19 +13,32 @@ import {
   TrabajadorTicketItem,
 } from "../components/ticket/Columns";
 import { useAuth } from "@/context/useAuth";
+import { CreateTicketModal } from "@/components/ticket/CreateTicketModal";
 
 function TicketPage() {
   // 1. Obtenemos el usuario autenticado directamente desde el AuthContext
   const { user } = useAuth();
 
-  // Extraemos el ID de forma segura (el ID que se extrajo del token JWT y se guardó en el usuario)
+  // Extraemos el ID de forma segura
   const trabajadorId = user?.id;
 
-  // 2. Consumir el hook filtrando automáticamente por el id_trabajador obtenido del contexto
-  const { tickets, meta, isLoading, limit, updateQuery, setPage, setLimit } =
-    useTickets({
-      initialParams: trabajadorId ? { id_trabajador: trabajadorId } : undefined,
-    });
+  // Estado para controlar la apertura/cierre del modal de creación
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // 2. Consumir el hook extrayendo también `refetch` para actualizar la tabla manualmente si hace falta
+  const {
+    tickets,
+    meta,
+    isLoading,
+    limit,
+    updateQuery,
+    setPage,
+    setLimit,
+    refetch,
+  } = useTickets({
+    initialParams: { id_trabajador: trabajadorId },
+    userId: trabajadorId,
+  });
 
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("Todos");
@@ -74,7 +86,7 @@ function TicketPage() {
   };
 
   const handleOpenNewTicket = () => {
-    toast.info("Abrir modal o vista para registrar nuevo ticket...");
+    setIsCreateModalOpen(true);
   };
 
   return (
@@ -161,7 +173,7 @@ function TicketPage() {
         })}
       </div>
 
-      {/* TABLA DE TICKETS DEL TRABAJADOR USANDO MAPPEDTICKETS */}
+      {/* TABLA DE TICKETS DEL TRABAJADOR */}
       <DataTableContainer
         data={mappedTickets}
         columns={getTrabajadorTicketsColumns({
@@ -178,6 +190,16 @@ function TicketPage() {
         pageSize={limit}
         onPageChange={setPage}
         onPageSizeChange={setLimit}
+      />
+
+      {/* 3. Pasamos refetch directamente a onSuccess para recargar la tabla automáticamente */}
+      <CreateTicketModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        usuarioId={trabajadorId ?? 0}
+        onSuccess={() => {
+          refetch(); // <-- Esto fuerza la recarga de la lista y las métricas de inmediato
+        }}
       />
     </div>
   );

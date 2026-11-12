@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { getTicketById, getTickets } from "@/services/ticket/ticket.service";
 import { TicketListItem, GetTicketsParams } from "@/types/ticket/ticket.type";
 import { TicketDetailBackend } from "@/types/ticket/ticket-chat.type";
+import { createSocketConnection } from "@/lib/socket";
 
 interface UseTicketsOptions {
   initialParams?: GetTicketsParams;
+  userId?: string | number;
 }
 
 export const useTickets = (options?: UseTicketsOptions) => {
@@ -58,10 +60,42 @@ export const useTickets = (options?: UseTicketsOptions) => {
     }
   }, [queryParams]);
 
-  // Refrescar tickets cuando cambian los parámetros de consulta
+  // Cargar tickets al montar el componente y cuando cambian los parámetros de consulta
   useEffect(() => {
     fetchTickets();
   }, [fetchTickets]);
+
+  // Refrescar tickets cuando cambian los parámetros de consulta
+  useEffect(() => {
+    const userId = options?.userId;
+    if (!userId) return;
+
+    // Crear conexión de socket para recibir actualizaciones en tiempo real
+    const socket = createSocketConnection(String(userId), "tickets");
+
+    // Escuchar eventos de conexión y unirse a la sala de tickets
+    socket.on("connect", () => {
+      console.log("Conectado al namespace de tickets:", socket.id);
+      socket.emit("join_tickets_room", { roomId: "tickets_dashboard" });
+      socket.emit("join_tickets_room", { roomId: `user_${userId}` });
+    });
+
+    // Escuchar eventos de actualización de tickets
+    socket.on("refresh_tickets_list", (data) => {
+      console.log("Actualización de tickets recibida:", data);
+      fetchTickets();
+    });
+
+    // Escuchar eventos de asignación de tickets
+    socket.on("ticket_assigned", (data) => {
+      console.log("Te asignaron un ticket:", data);
+      fetchTickets();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [options?.userId, fetchTickets]);
 
   // Manejo de filtros y paginación
   const updateQuery = (newFilters: Record<string, any>) => {
