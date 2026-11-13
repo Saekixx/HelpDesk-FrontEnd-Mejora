@@ -5,6 +5,7 @@ import TicketPage from "./pages/TicketPage";
 import SoftwarePage from "./pages/SoftwarePage";
 import HardwarePage from "./pages/HardwarePage";
 import CronogramaPage from "./pages/CronogramaPage";
+import TicketDetailPage from "./pages/TicketDetailPage";
 
 function RemotoRoutes() {
   return (
@@ -14,6 +15,7 @@ function RemotoRoutes() {
       <Route path="hardware" element={<HardwarePage />} />
       <Route path="software" element={<SoftwarePage />} />
       <Route path="tickets" element={<TicketPage />} />
+      <Route path="/tickets/:id" element={<TicketDetailPage />} />
       <Route path="cronograma-citas" element={<CronogramaPage />} />
     </Routes>
   );

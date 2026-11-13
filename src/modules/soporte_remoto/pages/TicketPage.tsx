@@ -32,13 +32,13 @@ function TicketPage() {
   }, [activeTab]);
 
   const handleOpenChat = (item: TicketListItem) => {
-    navigate(`/soporte/tickets/${item.id_ticket}`, {
+    navigate(`/soporte-tecnico/tickets/${item.id_ticket}`, {
       state: { ticket: item },
     });
   };
 
   const handleViewDetail = (item: TicketListItem) => {
-    navigate(`/soporte/tickets/${item.id_ticket}`, {
+    navigate(`/soporte-tecnico/tickets/${item.id_ticket}`, {
       state: { ticket: item },
     });
   };

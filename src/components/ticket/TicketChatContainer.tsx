@@ -23,6 +23,7 @@ interface TicketChatContainerProps {
   mensajes: TicketChatMessage[];
   onSendMessage?: (text: string) => void;
   onAssignQuickSupport?: () => void;
+  isDisabled?: boolean;
 }
 
 export const TicketChatContainer = ({
@@ -30,6 +31,7 @@ export const TicketChatContainer = ({
   mensajes,
   onSendMessage,
   onAssignQuickSupport,
+  isDisabled = false,
 }: TicketChatContainerProps) => {
   const [textInput, setTextInput] = React.useState("");
 
@@ -38,7 +40,7 @@ export const TicketChatContainer = ({
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!textInput.trim() || isClosed || isPending) return;
+    if (!textInput.trim() || isClosed || isPending || isDisabled) return;
     if (onSendMessage) onSendMessage(textInput);
     setTextInput("");
   };
@@ -118,95 +120,117 @@ export const TicketChatContainer = ({
       )}
 
       {/* ÁREA DE MENSAJES */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/30">
-        {mensajes.map((msg) => {
-          if (msg.emisor === "SISTEMA") {
+      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/30 flex flex-col">
+        {mensajes.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-2 my-auto">
+            <div className="h-12 w-12 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#ff5722] mb-1">
+              <FileCheck className="h-6 w-6" />
+            </div>
+            <h4 className="font-extrabold text-slate-800 text-xs">
+              Aún no hay mensajes en este chat
+            </h4>
+            <p className="text-[11px] text-slate-400 font-medium max-w-xs">
+              Inicia la conversación técnica escribiendo un mensaje abajo. Todo
+              el historial se guardará en tiempo real.
+            </p>
+          </div>
+        ) : (
+          mensajes.map((msg) => {
+            if (msg.emisor === "SISTEMA") {
+              return (
+                <div key={msg.id} className="flex justify-center my-2">
+                  <div className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[11px] font-semibold border border-slate-200/60 shadow-2xs">
+                    {msg.timestamp} · {msg.texto}
+                  </div>
+                </div>
+              );
+            }
+
+            const isTecnico = msg.emisor === "TECNICO";
+
             return (
-              <div key={msg.id} className="flex justify-center my-2">
-                <div className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[11px] font-semibold border border-slate-200/60 shadow-2xs">
-                  {msg.timestamp} · {msg.texto}
+              <div
+                key={msg.id}
+                className={`flex gap-3 max-w-[80%] ${isTecnico ? "ml-auto flex-row-reverse" : "mr-auto"}`}
+              >
+                <div
+                  className={`h-8 w-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                    isTecnico
+                      ? "bg-blue-100 text-blue-700 border border-blue-200"
+                      : "bg-orange-100 text-[#ff5722] border border-orange-200"
+                  }`}
+                >
+                  {msg.autorNombre
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)}
+                </div>
+
+                <div className="space-y-1">
+                  <div
+                    className={`flex items-center gap-2 ${isTecnico ? "justify-end" : ""}`}
+                  >
+                    <span className="font-extrabold text-slate-900 text-[11px]">
+                      {msg.autorNombre}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      {msg.timestamp}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`p-3.5 rounded-2xl text-xs font-medium leading-relaxed space-y-2 ${
+                      isTecnico
+                        ? "bg-blue-600 text-white rounded-tr-none shadow-xs"
+                        : "bg-white text-slate-800 border border-slate-200/80 rounded-tl-none shadow-2xs"
+                    }`}
+                  >
+                    {msg.texto && <p>{msg.texto}</p>}
+
+                    {msg.adjunto && (
+                      <div
+                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 ${
+                          isTecnico
+                            ? "bg-blue-700/50 border-blue-500/50 text-white"
+                            : "bg-slate-900 text-white border-slate-800"
+                        }`}
+                      >
+                        <div className="space-y-0.5 truncate">
+                          <p className="font-bold text-[11px] truncate">
+                            {msg.adjunto.nombre}
+                          </p>
+                          <p className="text-[10px] text-slate-300 font-medium">
+                            {msg.adjunto.peso}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-white hover:bg-white/20 text-[10px] font-bold gap-1 shrink-0"
+                        >
+                          <Eye className="h-3 w-3" /> Previsualizar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
-          }
-
-          const isTecnico = msg.emisor === "TECNICO";
-
-          return (
-            <div
-              key={msg.id}
-              className={`flex gap-3 max-w-[80%] ${isTecnico ? "ml-auto flex-row-reverse" : "mr-auto"}`}
-            >
-              <div
-                className={`h-8 w-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                  isTecnico
-                    ? "bg-blue-100 text-blue-700 border border-blue-200"
-                    : "bg-orange-100 text-[#ff5722] border border-orange-200"
-                }`}
-              >
-                {msg.autorNombre
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)}
-              </div>
-
-              <div className="space-y-1">
-                <div
-                  className={`flex items-center gap-2 ${isTecnico ? "justify-end" : ""}`}
-                >
-                  <span className="font-extrabold text-slate-900 text-[11px]">
-                    {msg.autorNombre}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-semibold">
-                    {msg.timestamp}
-                  </span>
-                </div>
-
-                <div
-                  className={`p-3.5 rounded-2xl text-xs font-medium leading-relaxed space-y-2 ${
-                    isTecnico
-                      ? "bg-blue-600 text-white rounded-tr-none shadow-xs"
-                      : "bg-white text-slate-800 border border-slate-200/80 rounded-tl-none shadow-2xs"
-                  }`}
-                >
-                  {msg.texto && <p>{msg.texto}</p>}
-
-                  {msg.adjunto && (
-                    <div
-                      className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 ${
-                        isTecnico
-                          ? "bg-blue-700/50 border-blue-500/50 text-white"
-                          : "bg-slate-900 text-white border-slate-800"
-                      }`}
-                    >
-                      <div className="space-y-0.5 truncate">
-                        <p className="font-bold text-[11px] truncate">
-                          {msg.adjunto.nombre}
-                        </p>
-                        <p className="text-[10px] text-slate-300 font-medium">
-                          {msg.adjunto.peso}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-white hover:bg-white/20 text-[10px] font-bold gap-1 shrink-0"
-                      >
-                        <Eye className="h-3 w-3" /> Previsualizar
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+          })
+        )}
       </div>
 
       {/* FOOTER DE ENTRADA DE CHAT */}
       <div className="p-3 bg-white border-t border-slate-100">
-        {isPending ? (
+        {isDisabled ? (
+          <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center text-slate-500 text-xs font-semibold space-y-0.5">
+            <p className="flex items-center justify-center gap-1.5 font-bold text-slate-700">
+              <Lock className="h-3.5 w-3.5" /> El envío de mensajes está
+              deshabilitado.
+            </p>
+          </div>
+        ) : isPending ? (
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
               <Lock className="h-4 w-4 text-slate-400 shrink-0" />

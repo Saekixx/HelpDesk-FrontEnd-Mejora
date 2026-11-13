@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { TicketSidebar } from "@/components/ticket/TicketSidebar";
 import { TicketChatContainer } from "@/components/ticket/TicketChatContainer";
+import { useChat } from "@/hooks/chat/useChat";
+import { useAuth } from "@/context/useAuth";
 
 const getBadgeStyleByEstado = (estado: string) => {
   switch (estado.toLowerCase()) {
@@ -28,8 +30,13 @@ const getBadgeStyleByEstado = (estado: string) => {
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { ticket, isLoadingDetail } = useTicketDetail(id);
+  const { mensajes } = useChat({
+    ticket, // Le pasamos el ticket completo
+    userId: user?.id || "",
+  });
 
   if (isLoadingDetail) {
     return (
@@ -111,22 +118,8 @@ export default function TicketDetailPage() {
 
         <TicketChatContainer
           ticket={ticket}
-          mensajes={[
-            {
-              id: "1",
-              emisor: "SISTEMA",
-              autorNombre: "Sistema",
-              timestamp: new Date(ticket.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              texto: `Incidencia registrada con PIN ${ticket.pin} por ${ticket.trabajador.nombre} ${ticket.trabajador.apellido}`,
-            },
-          ]}
-          onSendMessage={(text) => toast.info(`Mensaje encolado: ${text}`)}
-          onAssignQuickSupport={() =>
-            toast.info("Asignación rápida de soporte")
-          }
+          mensajes={mensajes}
+          isDisabled={true}
         />
       </div>
     </div>

@@ -74,13 +74,13 @@ function TicketPage() {
   );
 
   const handleOpenChat = (item: TrabajadorTicketItem) => {
-    navigate(`/trabajador/tickets/${item.id_ticket}`, {
+    navigate(`/cliente-trabajador/tickets/${item.id_ticket}`, {
       state: { ticket: item },
     });
   };
 
   const handleViewDetail = (item: TrabajadorTicketItem) => {
-    navigate(`/trabajador/tickets/${item.id_ticket}`, {
+    navigate(`/cliente-trabajador/tickets/${item.id_ticket}`, {
       state: { ticket: item },
     });
   };
