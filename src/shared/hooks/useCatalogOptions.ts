@@ -22,6 +22,9 @@ export const useCatalogOptions = () => {
   const [planes, setPlanes] = useState<SelectOption<number>[]>([]);
   const [trabajadores, setTrabajadores] = useState<SelectOption<number>[]>([]);
   const [soportes, setSoportes] = useState<SelectOption<number>[]>([]);
+  const [soportesInsitu, setSoportesInsitu] = useState<SelectOption<number>[]>(
+    [],
+  );
   const [zonas, setZonas] = useState<SelectOption<number>[]>([]);
   const [equipos, setEquipos] = useState<SelectOption<number>[]>([]);
 
@@ -46,6 +49,8 @@ export const useCatalogOptions = () => {
   const [loadingTrabajadores, setLoadingTrabajadores] =
     useState<boolean>(false);
   const [loadingSoportes, setLoadingSoportes] = useState<boolean>(false);
+  const [loadingSoportesInsitu, setLoadingSoportesInsitu] =
+    useState<boolean>(false);
   const [loadingZonas, setLoadingZonas] = useState<boolean>(false);
   const [loadingEquipos, setLoadingEquipos] = useState<boolean>(false);
 
@@ -213,6 +218,27 @@ export const useCatalogOptions = () => {
     [],
   );
 
+  // 5b. Función para consultar explícitamente usuarios con rol de Soporte In-Situ
+  const getSoportesInsituOptions = useCallback(
+    async (extraParams?: GetTrabajadoresOptionsParams) => {
+      setLoadingSoportesInsitu(true);
+      try {
+        const data = await getTrabajadoresOptions({
+          ...extraParams,
+          rol: "SOPORTE_INSITU",
+        });
+        setSoportesInsitu(data || []);
+        return data || [];
+      } catch (error) {
+        console.error("Error al cargar usuarios de soporte In-Situ", error);
+        return [];
+      } finally {
+        setLoadingSoportesInsitu(false);
+      }
+    },
+    [],
+  );
+
   // 6. Cargar equipos en cascada cuando cambia el área o el trabajador seleccionado
   useEffect(() => {
     let isMounted = true;
@@ -284,6 +310,7 @@ export const useCatalogOptions = () => {
       planes: loadingPlanes,
       trabajadores: loadingTrabajadores,
       soportes: loadingSoportes,
+      soportesInsitu: loadingSoportesInsitu,
       zonas: loadingZonas,
       equipos: loadingEquipos,
     }),
@@ -295,6 +322,7 @@ export const useCatalogOptions = () => {
       loadingPlanes,
       loadingTrabajadores,
       loadingSoportes,
+      loadingSoportesInsitu,
       loadingZonas,
       loadingEquipos,
     ],
@@ -309,11 +337,14 @@ export const useCatalogOptions = () => {
     planes,
     trabajadores,
     soportes,
+    soportesInsitu,
     zonas,
     equipos,
 
     // Métodos para cargar u obtener datos específicos
     getSoportesOptions,
+    getSoportesInsituOptions,
+    setSoportesInsitu,
     setSelectedClienteId,
     setSelectedSucursalId,
     setSelectedAreaId,

@@ -253,7 +253,7 @@ function TicketsPage() {
           { label: "Pendiente" },
           { label: "Asignado" },
           { label: "En Progreso" },
-          { label: "Derivado Insitu" },
+          { label: "Derivado InSitu" },
           { label: "En Espera Repuesto" },
           { label: "Reabierto" },
           { label: "Cerrado" },

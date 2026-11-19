@@ -104,10 +104,8 @@ export default function TicketDetailPage() {
       <div className="flex flex-col lg:flex-row gap-4 items-start">
         <TicketSidebar
           ticket={ticket}
+          hideActionButtons={true}
           onBack={() => navigate("/cliente-trabajador/tickets")}
-          onCloseTicket={() => toast.success("Ticket cerrado exitosamente")}
-          onResumeAttenting={() => toast.success("Atención reanudada")}
-          onReopenTicket={() => toast.info("Reabriendo ticket...")}
         />
 
         <TicketChatContainer

@@ -13,7 +13,21 @@ export const getTickets = async (
 ): Promise<ApiResponse<NestedPaginatedResponse<TicketListItem>>> => {
   const response = await api.get<
     ApiResponse<NestedPaginatedResponse<TicketListItem>>
-  >("/ticket", { params });
+  >("/ticket", {
+    params,
+    paramsSerializer: (queryParams) => {
+      if (!queryParams) return "";
+      return Object.entries(queryParams)
+        .filter(
+          ([, value]) => value !== undefined && value !== null && value !== "",
+        )
+        .map(
+          ([key, value]) =>
+            `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`,
+        )
+        .join("&");
+    },
+  });
   return response.data;
 };
 
@@ -38,6 +52,48 @@ export const createTicket = async (request: createTicketRequest) => {
   const response = await api.post<ApiResponse<TicketDetailBackend>>(
     "/ticket",
     request,
+  );
+  return response.data;
+};
+
+/**
+ * Cerrar un ticket existente
+ * Endpoint: PATCH /ticket/{id}/close
+ */
+export const closeTicket = async (ticketId: number, reporte_cierre: string) => {
+  const response = await api.patch<ApiResponse<null>>(
+    `/ticket/${ticketId}/close`,
+    { reporte_cierre },
+  );
+  return response.data;
+};
+
+/**
+ * Reabrir un ticket existente
+ * Endpoint: PATCH /ticket/{id}/reopen
+ */
+export const reopenTicket = async (
+  ticketId: number,
+  motivo_reapertura: string,
+) => {
+  const response = await api.patch<ApiResponse<null>>(
+    `/ticket/${ticketId}/reopen`,
+    { motivo_reapertura },
+  );
+  return response.data;
+};
+
+/**
+ * Asignar un soporte a un ticket existente
+ * Endpoint: PATCH /ticket/{id}/assign-support
+ */
+export const assignSupportToTicket = async (
+  ticketId: number,
+  idSoporte: number,
+) => {
+  const response = await api.patch<ApiResponse<null>>(
+    `/ticket/${ticketId}/assign-support`,
+    { idSoporte },
   );
   return response.data;
 };

@@ -33,6 +33,18 @@ interface TicketSidebarProps {
   onRegisterVisitReport?: () => void;
   onReopenTicket?: () => void;
   onDownloadReportPdf?: () => void;
+
+  // Oculta todos los botones de acción inferiores (útil para la vista del trabajador)
+  hideActionButtons?: boolean;
+
+  // Props de visibilidad individuales
+  showAssignTechnical?: boolean;
+  showCloseTicket?: boolean;
+  showDeriveInSitu?: boolean;
+  showResumeAttenting?: boolean;
+  showRegisterVisitReport?: boolean;
+  showReopenTicket?: boolean;
+  showDownloadReportPdf?: boolean;
 }
 
 export const TicketSidebar = ({
@@ -45,6 +57,14 @@ export const TicketSidebar = ({
   onRegisterVisitReport,
   onReopenTicket,
   onDownloadReportPdf,
+  hideActionButtons = false,
+  showAssignTechnical = true,
+  showCloseTicket = true,
+  showDeriveInSitu = true,
+  showResumeAttenting = true,
+  showRegisterVisitReport = true,
+  showReopenTicket = true,
+  showDownloadReportPdf = true,
 }: TicketSidebarProps) => {
   const {
     estado,
@@ -56,7 +76,12 @@ export const TicketSidebar = ({
     reaperturaInfo,
     solucionInfo,
   } = ticket;
-  const isEstado = (val: string) => estado.toLowerCase() === val.toLowerCase();
+
+  const normalize = (val: string) =>
+    val.toLowerCase().replace(/\s+/g, " ").trim();
+  const isEstado = (val: string) => normalize(estado) === normalize(val);
+  const isEstadoInSitu =
+    isEstado("Derivado Insitu") || isEstado("Derivado InSitu");
 
   const nombreSolicitante = `${trabajador.nombre} ${trabajador.apellido}`;
   const nombreSoporte = soporte
@@ -199,7 +224,7 @@ export const TicketSidebar = ({
       </div>
 
       {/* BLOQUE DINÁMICO DE CONTEXTO DE ESTADO */}
-      {isEstado("Derivado Insitu") && visitaInfo && (
+      {isEstadoInSitu && visitaInfo && (
         <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-2">
           <div className="flex items-center justify-between text-purple-900 font-extrabold">
             <span className="flex items-center gap-1.5 text-xs">
@@ -355,98 +380,84 @@ export const TicketSidebar = ({
         </div>
       </div>
 
-      {/* BOTONERA DE ACCIÓN INFERIOR */}
-      <div className="space-y-2 pt-2">
-        {isEstado("Pendiente") && (
-          <>
+      {/* BOTONERA DE ACCIÓN INFERIOR CONDICIONAL */}
+      {!hideActionButtons && (
+        <div className="space-y-2 pt-2">
+          {isEstado("Pendiente") && showAssignTechnical && (
             <Button
               onClick={onAssignTechnical}
               className="w-full h-11 bg-[#ff5722] hover:bg-[#f4511e] text-white font-extrabold rounded-xl shadow-xs gap-2 text-xs cursor-pointer"
             >
               <UserPlus className="h-4 w-4" /> Asignar Soporte Técnico
             </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold rounded-xl text-xs cursor-pointer"
-            >
-              Derivar a Cola General / Cancelar
-            </Button>
-          </>
-        )}
+          )}
 
-        {(isEstado("En Progreso") || isEstado("Reabierto")) && (
-          <>
+          {(isEstado("En Progreso") || isEstado("Reabierto")) && (
+            <>
+              {showCloseTicket && (
+                <Button
+                  onClick={onCloseTicket}
+                  className="w-full h-11 bg-[#ff5722] hover:bg-[#f4511e] text-white font-extrabold rounded-xl shadow-xs gap-2 text-xs cursor-pointer"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Cerrar Ticket
+                </Button>
+              )}
+              {showDeriveInSitu && (
+                <Button
+                  onClick={onDeriveInSitu}
+                  variant="outline"
+                  className="w-full h-10 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 font-bold rounded-xl text-xs gap-2 cursor-pointer"
+                >
+                  <MapPin className="h-4 w-4" /> Derivar a Visita In-Situ
+                </Button>
+              )}
+            </>
+          )}
+
+          {isEstadoInSitu && showCloseTicket && (
             <Button
               onClick={onCloseTicket}
               className="w-full h-11 bg-[#ff5722] hover:bg-[#f4511e] text-white font-extrabold rounded-xl shadow-xs gap-2 text-xs cursor-pointer"
             >
               <CheckCircle2 className="h-4 w-4" /> Cerrar Ticket
             </Button>
-            <Button
-              onClick={onDeriveInSitu}
-              variant="outline"
-              className="w-full h-10 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 font-bold rounded-xl text-xs gap-2 cursor-pointer"
-            >
-              <MapPin className="h-4 w-4" /> Derivar a Visita In-Situ
-            </Button>
-          </>
-        )}
+          )}
 
-        {isEstado("Derivado Insitu") && (
-          <>
+          {isEstado("En Espera Repuesto") && showResumeAttenting && (
             <Button
-              onClick={onRegisterVisitReport}
-              className="w-full h-11 bg-purple-600 hover:bg-purple-700 text-white font-extrabold rounded-xl shadow-xs gap-2 text-xs cursor-pointer"
+              onClick={onResumeAttenting}
+              className="w-full h-11 bg-[#ff5722] hover:bg-[#f4511e] text-white font-extrabold rounded-xl shadow-xs gap-2 text-xs cursor-pointer"
             >
-              <FileText className="h-4 w-4" /> Registrar Informe de Visita
+              <RotateCcw className="h-4 w-4" /> Reanudar Atención (Repuesto
+              Disponible)
             </Button>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="h-9 text-slate-700 border-slate-200 font-bold text-[11px] rounded-xl cursor-pointer"
-              >
-                Reprogramar Cita
-              </Button>
-              <Button
-                onClick={onCloseTicket}
-                variant="outline"
-                className="h-9 text-slate-700 border-slate-200 font-bold text-[11px] rounded-xl cursor-pointer"
-              >
-                Cerrar Ticket
-              </Button>
-            </div>
-          </>
-        )}
+          )}
 
-        {isEstado("En Espera Repuesto") && (
-          <Button
-            onClick={onResumeAttenting}
-            className="w-full h-11 bg-[#ff5722] hover:bg-[#f4511e] text-white font-extrabold rounded-xl shadow-xs gap-2 text-xs cursor-pointer"
-          >
-            <RotateCcw className="h-4 w-4" /> Reanudar Atención (Repuesto
-            Disponible)
-          </Button>
-        )}
-
-        {isEstado("Cerrado") && (
-          <>
-            <Button
-              onClick={onReopenTicket}
-              variant="outline"
-              className="w-full h-10 text-slate-700 border-slate-200 hover:bg-slate-50 font-bold rounded-xl text-xs gap-2 cursor-pointer"
-            >
-              <RotateCcw className="h-4 w-4" /> Reabrir Ticket
-            </Button>
-            <Button
-              onClick={onDownloadReportPdf}
-              variant="outline"
-              className="w-full h-10 bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200 font-bold rounded-xl text-xs gap-2 cursor-pointer"
-            >
-              <FileText className="h-4 w-4" /> Descargar Acta de Entrega (PDF)
-            </Button>
-          </>
-        )}
-      </div>
+          {isEstado("Cerrado") && (
+            <>
+              {showReopenTicket && (
+                <Button
+                  onClick={onReopenTicket}
+                  variant="outline"
+                  className="w-full h-10 text-slate-700 border-slate-200 hover:bg-slate-50 font-bold rounded-xl text-xs gap-2 cursor-pointer"
+                >
+                  <RotateCcw className="h-4 w-4" /> Reabrir Ticket
+                </Button>
+              )}
+              {showDownloadReportPdf && (
+                <Button
+                  onClick={onDownloadReportPdf}
+                  variant="outline"
+                  className="w-full h-10 bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200 font-bold rounded-xl text-xs gap-2 cursor-pointer"
+                >
+                  <FileText className="h-4 w-4" /> Descargar Acta de Entrega
+                  (PDF)
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };

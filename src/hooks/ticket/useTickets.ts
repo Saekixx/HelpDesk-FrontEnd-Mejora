@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { getTicketById, getTickets } from "@/services/ticket/ticket.service";
-import { TicketListItem, GetTicketsParams } from "@/types/ticket/ticket.type";
+import {
+  TicketListItem,
+  GetTicketsParams,
+  mapEstadoTicket,
+} from "@/types/ticket/ticket.type";
 import { TicketDetailBackend } from "@/types/ticket/ticket-chat.type";
 import { createSocketConnection } from "@/lib/socket";
 
@@ -26,7 +30,7 @@ export const useTickets = (options?: UseTicketsOptions) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Obtener listado de tickets
+  // Obtener listado de tickets con mapeo de estados limpios
   const fetchTickets = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -35,7 +39,14 @@ export const useTickets = (options?: UseTicketsOptions) => {
       const response = await getTickets(paramsToSend);
 
       if (response && response.data) {
-        const items = response.data.data || [];
+        const rawItems = response.data.data || [];
+
+        // Mapeamos los estados del backend (ej: EN_PROGRESO) al formato limpio del frontend (En Progreso)
+        const items: TicketListItem[] = rawItems.map((t: any) => ({
+          ...t,
+          estado: mapEstadoTicket(t.estado),
+        }));
+
         const paginationMeta = response.data.meta || {
           total: 0,
           page: 1,
@@ -65,28 +76,24 @@ export const useTickets = (options?: UseTicketsOptions) => {
     fetchTickets();
   }, [fetchTickets]);
 
-  // Refrescar tickets cuando cambian los parámetros de consulta
+  // Refrescar tickets en tiempo real mediante Sockets
   useEffect(() => {
     const userId = options?.userId;
     if (!userId) return;
 
-    // Crear conexión de socket para recibir actualizaciones en tiempo real
     const socket = createSocketConnection(String(userId), "tickets");
 
-    // Escuchar eventos de conexión y unirse a la sala de tickets
     socket.on("connect", () => {
       console.log("Conectado al namespace de tickets:", socket.id);
       socket.emit("join_tickets_room", { roomId: "tickets_dashboard" });
       socket.emit("join_tickets_room", { roomId: `user_${userId}` });
     });
 
-    // Escuchar eventos de actualización de tickets
     socket.on("refresh_tickets_list", (data) => {
       console.log("Actualización de tickets recibida:", data);
       fetchTickets();
     });
 
-    // Escuchar eventos de asignación de tickets
     socket.on("ticket_assigned", (data) => {
       console.log("Te asignaron un ticket:", data);
       fetchTickets();
@@ -157,7 +164,7 @@ export const useTickets = (options?: UseTicketsOptions) => {
   };
 };
 
-// Hook para obtener el detalle de un ticket por ID
+// Hook para obtener el detalle de un ticket por ID con estado mapeado
 export const useTicketDetail = (id: string | number | undefined) => {
   const [ticket, setTicket] = useState<TicketDetailBackend | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
@@ -170,7 +177,13 @@ export const useTicketDetail = (id: string | number | undefined) => {
     try {
       const response = await getTicketById(id);
       if (response && response.data) {
-        setTicket(response.data);
+        const rawTicket = response.data;
+        // Limpiamos y mapeamos el estado del detalle también por seguridad
+        const sanitizedTicket: TicketDetailBackend = {
+          ...rawTicket,
+          estado: mapEstadoTicket(rawTicket.estado),
+        };
+        setTicket(sanitizedTicket);
       }
     } catch (err: any) {
       console.error("Error al cargar el detalle del ticket:", err);
