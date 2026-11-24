@@ -73,6 +73,8 @@ export interface SucursalDetail {
   nombre_sucursal: string;
   is_active: boolean;
   direccion: string;
+  latitud: number;
+  longitud: number;
   id_zona: number | null;
   areasVinculadas: SucursalAreaVinculada[];
   clienteEmpresa: SucursalClienteEmpresa | null;

@@ -8,6 +8,8 @@ export interface EncargadoRequest {
 export interface SucursalRequest {
   nombre_sucursal: string;
   direccion: string;
+  latitud: number;
+  longitud: number;
   id_cliente: number;
   id_zona?: number | null;
   encargado: EncargadoRequest;

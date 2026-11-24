@@ -19,6 +19,7 @@ import {
 import { SelectOption } from "@/shared/types/select-option.types";
 import { useSucursalMutations } from "@/hooks/sucursal/useSucursalMutations";
 import { SucursalListItem } from "@/types/sucursal/sucursal.types";
+import { GoogleMapPicker } from "@/components/sucursal/GoogleMapPicker";
 import { toast } from "sonner";
 
 interface SucursalFormProps {
@@ -49,6 +50,8 @@ export const SucursalForm = ({
     trigger,
     reset,
     setError,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<SucursalFormData>({
     resolver: zodResolver(
@@ -59,12 +62,17 @@ export const SucursalForm = ({
       nombre: "",
       direccion: "",
       id_zona: undefined,
+      latitud: undefined,
+      longitud: undefined,
       encargado_nombre: "",
       encargado_apellido: "",
       telefono: "",
       correo: "",
     },
   });
+
+  const latitudValue = watch("latitud" as any);
+  const longitudValue = watch("longitud" as any);
 
   // Rellenar o resetear formulario según si es Edición o Creación
   React.useEffect(() => {
@@ -77,6 +85,14 @@ export const SucursalForm = ({
         direccion: sucursalToEdit.direccion || "",
         id_zona:
           sucursalToEdit.zona?.id_zona ?? sucursalToEdit.id_zona ?? undefined,
+        latitud:
+          sucursalToEdit.latitud != null
+            ? Number(sucursalToEdit.latitud)
+            : undefined,
+        longitud:
+          sucursalToEdit.longitud != null
+            ? Number(sucursalToEdit.longitud)
+            : undefined,
         encargado_nombre:
           sucursalToEdit.encargado?.nombre ||
           sucursalToEdit.encargado_nombre ||
@@ -101,6 +117,8 @@ export const SucursalForm = ({
         nombre: "",
         direccion: "",
         id_zona: undefined,
+        latitud: undefined,
+        longitud: undefined,
         encargado_nombre: "",
         encargado_apellido: "",
         telefono: "",
@@ -123,13 +141,41 @@ export const SucursalForm = ({
     setStep(1);
   };
 
+  const handleMapChange = ({
+    latitud,
+    longitud,
+  }: {
+    latitud: number;
+    longitud: number;
+  }) => {
+    setValue("latitud" as any, latitud, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue("longitud" as any, longitud, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
+
   const onSubmit = async (data: SucursalFormData) => {
     try {
+      const rawLat = (data as any).latitud;
+      const rawLng = (data as any).longitud;
+
       const payload = {
         id_cliente: Number(data.id_cliente),
         nombre_sucursal: data.nombre,
         direccion: data.direccion,
         id_zona: data.id_zona ? Number(data.id_zona) : null,
+        latitud:
+          rawLat !== undefined && rawLat !== null && rawLat !== ""
+            ? Number(rawLat)
+            : null,
+        longitud:
+          rawLng !== undefined && rawLng !== null && rawLng !== ""
+            ? Number(rawLng)
+            : null,
         encargado: {
           nombre: data.encargado_nombre,
           apellido: data.encargado_apellido,
@@ -177,6 +223,74 @@ export const SucursalForm = ({
       }
     }
   };
+
+  const renderLocationFields = () => (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <Label className="text-xs font-bold text-slate-700">
+          Dirección Fiscal / Ubicación <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          {...register("direccion")}
+          placeholder="Ej. Av. Abancay 450, Cercado de Lima"
+          className="h-10 text-xs"
+        />
+        {errors.direccion && (
+          <p className="text-[11px] text-red-500 font-semibold">
+            {errors.direccion.message}
+          </p>
+        )}
+      </div>
+
+      <GoogleMapPicker
+        latitud={
+          latitudValue !== undefined && latitudValue !== ""
+            ? Number(latitudValue)
+            : null
+        }
+        longitud={
+          longitudValue !== undefined && longitudValue !== ""
+            ? Number(longitudValue)
+            : null
+        }
+        onChange={handleMapChange}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-bold text-slate-700">Latitud</Label>
+          <Input
+            type="number"
+            step="any"
+            {...register("latitud" as any)}
+            placeholder="Ej. -12.046374"
+            className="h-10 text-xs"
+          />
+          {(errors as any).latitud && (
+            <p className="text-[11px] text-red-500 font-semibold">
+              {(errors as any).latitud.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs font-bold text-slate-700">Longitud</Label>
+          <Input
+            type="number"
+            step="any"
+            {...register("longitud" as any)}
+            placeholder="Ej. -77.042793"
+            className="h-10 text-xs"
+          />
+          {(errors as any).longitud && (
+            <p className="text-[11px] text-red-500 font-semibold">
+              {(errors as any).longitud.message}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
@@ -375,18 +489,7 @@ export const SucursalForm = ({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold text-slate-700">
-              Dirección Fiscal / Ubicación{" "}
-              <span className="text-red-500">*</span>
-            </Label>
-            <Input {...register("direccion")} className="h-10 text-xs" />
-            {errors.direccion && (
-              <p className="text-[11px] text-red-500 font-semibold">
-                {errors.direccion.message}
-              </p>
-            )}
-          </div>
+          {renderLocationFields()}
         </div>
       ) : (
         /* CREACIÓN EN 2 PASOS */
@@ -493,22 +596,7 @@ export const SucursalForm = ({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">
-                  Dirección Fiscal / Ubicación{" "}
-                  <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  {...register("direccion")}
-                  placeholder="Ej. Av. Abancay 450, Cercado de Lima"
-                  className="h-10 text-xs"
-                />
-                {errors.direccion && (
-                  <p className="text-[11px] text-red-500 font-semibold">
-                    {errors.direccion.message}
-                  </p>
-                )}
-              </div>
+              {renderLocationFields()}
             </div>
           )}
 
