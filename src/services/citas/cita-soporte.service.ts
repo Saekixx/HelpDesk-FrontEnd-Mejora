@@ -2,9 +2,12 @@ import { api } from "@/lib/axios";
 import { ApiResponse } from "@/types/api.types";
 import {
   AutoAsignarResponse,
+  CitaSoporteDetail,
+  CitasSoporteListResponse,
   CreateSoftLockRequest,
   DerivarInSituRequest,
   FranjaDisponibilidad,
+  GetCitasSoporteParams,
   SoftLockResponse,
 } from "@/types/cita/cita-soporte.type";
 
@@ -16,7 +19,6 @@ export const getAutoAsignarInSitu = async (
   const response = await api.get<
     ApiResponse<AutoAsignarResponse> | AutoAsignarResponse
   >("/soft-lock/auto-asignar", { params: { id_sucursal, fecha } });
-  // Soporta tanto si tu backend envuelve en { data: ... } como si lo devuelve directo
   return "data" in response.data && response.data.data !== undefined
     ? response.data.data
     : (response.data as AutoAsignarResponse);
@@ -54,4 +56,34 @@ export const createSoftLock = async (
 export const derivarTicketInSitu = async (payload: DerivarInSituRequest) => {
   const response = await api.post("/citas-soporte/derivar", payload);
   return response.data;
+};
+
+// 5. Obtener lista de citas de soporte con filtros y paginación
+export const getCitasSoporte = async (
+  params?: GetCitasSoporteParams,
+): Promise<CitasSoporteListResponse> => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params || {}).filter(
+      ([, value]) => value !== undefined && value !== null && value !== "",
+    ),
+  );
+
+  const response = await api.get<CitasSoporteListResponse>("/citas-soporte", {
+    params: cleanParams,
+  });
+
+  return response.data;
+};
+
+// 6. Obtener detalle completo de una cita de soporte por ID
+export const getCitaSoporteById = async (
+  id: number | string,
+): Promise<CitaSoporteDetail> => {
+  const response = await api.get<
+    ApiResponse<CitaSoporteDetail> | CitaSoporteDetail
+  >(`/citas-soporte/${id}`);
+
+  return "data" in response.data && response.data.data !== undefined
+    ? response.data.data
+    : (response.data as CitaSoporteDetail);
 };

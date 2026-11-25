@@ -21,15 +21,28 @@ interface TableFiltersBarProps {
     key: string,
     value: any,
     allFilters: Record<string, any>,
-  ) => void; // <--- NUEVO: Prop para cascada en tiempo real
+  ) => void;
   onResetFilters?: () => void;
   multiRow?: boolean;
 }
 
+const EMPTY_INITIAL_VALUES: Record<string, any> = {};
+
+const areFiltersEqual = (
+  a: Record<string, any>,
+  b: Record<string, any>,
+): boolean => {
+  if (a === b) return true;
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every((key) => a[key] === b[key]);
+};
+
 export const TableFiltersBar = ({
   searchPlaceholder = "Buscar...",
   dropdowns = [],
-  initialValues = {},
+  initialValues = EMPTY_INITIAL_VALUES,
   onApplyFilters,
   onFilterChange,
   onResetFilters,
@@ -39,14 +52,15 @@ export const TableFiltersBar = ({
     useState<Record<string, any>>(initialValues);
 
   useEffect(() => {
-    setFilterValues(initialValues);
+    setFilterValues((prev) =>
+      areFiltersEqual(prev, initialValues) ? prev : initialValues,
+    );
   }, [initialValues]);
 
   const handleInputChange = (key: string, value: any) => {
     const updated = { ...filterValues, [key]: value };
     setFilterValues(updated);
 
-    // Si la prop está activa, notificamos el cambio al instante (ideal para cascada)
     if (onFilterChange) {
       onFilterChange(key, value, updated);
     }
@@ -120,9 +134,7 @@ export const TableFiltersBar = ({
 
   return (
     <Card className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-3 mb-4">
-      {/* Primera Fila: Buscador y Filtros */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Input de Búsqueda */}
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -135,7 +147,6 @@ export const TableFiltersBar = ({
           />
         </div>
 
-        {/* Selects Desplegables en Fila Simple */}
         {!multiRow && dropdowns.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {dropdowns.map((dropdown) => (
@@ -173,7 +184,6 @@ export const TableFiltersBar = ({
           </div>
         )}
 
-        {/* Botones de Acción */}
         <div className="flex items-center gap-2 shrink-0">
           <Button
             onClick={handleApply}
@@ -195,7 +205,6 @@ export const TableFiltersBar = ({
         </div>
       </div>
 
-      {/* Segunda Fila (para MultiRow) */}
       {multiRow && dropdowns.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 pt-1">
           {dropdowns.map((dropdown) => (
